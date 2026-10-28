@@ -17,16 +17,16 @@ function pageRoutes(req, res, { url, user, session }) {
       }
       if(!user) return redirect(res,'/login');
       if(url.pathname === '/') return redirect(res,roleHome(user.role));
-      if(url.pathname === '/admin' && !hasRole(user, 'admin')) return send(res,'Không có quyền','<main class="workspace"><p class="eyebrow">403 · GIỚI HẠN TRUY CẬP</p><h1>Bạn không có quyền vào trang quản trị.</h1><a class="button" href="/staff">Về trang nhân viên →</a></main>',user,session,403);
+      if(url.pathname === '/admin' && !hasRole(user, 'admin')) return send(res,'Không có quyền','<main class="workspace"><h1>Bạn không có quyền vào trang quản trị.</h1><a class="button" href="/staff">Về trang nhân viên</a></main>',user,session,403);
       if(url.pathname === '/admin' || url.pathname === '/staff') return respond(url.pathname === '/admin' ? 'Trang quản trị' : 'Trang nhân viên',homePage(user));
       if(url.pathname === '/change-password') return respond('Đổi mật khẩu',passwordPage(session));
       const item = navigation.flatMap(group => group.items).find(item => item.path === url.pathname);
       if (item) {
-        if ((item.adminOnly && !hasRole(user, 'admin')) || (item.staffOnly && user.role !== 'staff')) return respond('Không có quyền', '<main class="workspace"><p class="eyebrow">403 · GIỚI HẠN TRUY CẬP</p><h1>Bạn không có quyền sử dụng chức năng này.</h1><a class="text-link" href="/">Về trang chủ →</a></main>', 403);
+        if ((item.adminOnly && !hasRole(user, 'admin')) || (item.staffOnly && user.role !== 'staff')) return respond('Không có quyền', '<main class="workspace"><h1>Bạn không có quyền sử dụng chức năng này.</h1><a class="text-link" href="/">Về trang chủ →</a></main>', 403);
         const admin = user.role === 'admin';
         const title = admin && item.adminLabel ? item.adminLabel : item.label;
         const description = admin && item.adminDescription ? item.adminDescription : item.description;
-        return respond(title, `<main class="workspace"><p class="eyebrow">${admin ? 'KHÔNG GIAN QUẢN TRỊ' : 'KHÔNG GIAN NHÂN VIÊN'}</p><div class="page-title"><div><h1>${escape(title)}</h1><p class="muted">${escape(description)}</p></div></div><section class="module-placeholder"><span class="pill">ĐANG PHÁT TRIỂN</span><h2>Chức năng sẽ sớm được bổ sung</h2><p>Trang này hiện dùng để điều hướng. Nghiệp vụ và dữ liệu sẽ được triển khai ở bước tiếp theo.</p></section></main>`);
+        return respond(title, `<main class="workspace"><div class="page-title"><div><h1>${escape(title)}</h1><p class="muted">${escape(description)}</p></div></div><section class="module-placeholder"><span class="pill" role="status" aria-label="ĐANG PHÁT TRIỂN">Đang phát triển</span><h2>Chức năng sẽ sớm được bổ sung</h2><p>Trang này hiện dùng để điều hướng. Nghiệp vụ và dữ liệu sẽ được triển khai ở bước tiếp theo.</p></section></main>`);
       }
       return send(res,'Không tìm thấy','<main class="workspace"><h1>Không tìm thấy trang</h1><a href="/">Về trang chủ</a></main>',user,session,404);
 
