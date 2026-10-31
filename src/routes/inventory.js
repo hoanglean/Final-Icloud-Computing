@@ -1,83 +1,43 @@
-const { applyStockChange } = require("../services/inventory");
+const { readForm, redirect, send, json } = require('../utils/http');
+const { invalid } = require('../utils/validation');
+const { transaction } = require('../utils/transaction');
+const { applyStockChange } = require('../services/inventory');
+const { stockFormPage, movementHistoryPage, lowStockPage } = require('../views/stock');
 
-const parseForm = (req) =>
-  new Promise((resolve) => {
-    let body = "";
-    req.on("data", (chunk) => (body += chunk.toString()));
-    req.on("end", () => resolve(new URLSearchParams(body)));
-  });
-
-async function inventoryRoutes(req, res, context) {
-  const { url, user, session, pool } = context;
-
-  // NHÂN VIÊN & ADMIN: XEM CẢNH BÁO TỒN THẤP
-  if (url.pathname === "/inventory/low-stock" && req.method === "GET") {
-    if (!user) return false;
-
-    const lowStockResult = await pool.query(`
-      SELECT p.id, p.name, p.sku, p.stock, p.current_price FROM public.products p 
-      LEFT JOIN public.pricing_rules pr ON p.id = pr.product_id 
-      WHERE p.stock <= COALESCE(pr.low_stock, 10) AND p.is_active = true
-    `);
-    res.writeHead(200, { "Content-Type": "application/json; charset=utf-8" });
-    return res.end(JSON.stringify(lowStockResult.rows));
+async function inventoryRoutes(req, res, { url, user, session, productRepository, inventoryRepository, pool }) {
+  const paths = ['/inventory/receive', '/inventory/adjust', '/inventory/history', '/inventory/low-stock'];
+  if (!paths.includes(url.pathname)) return false;
+  if (!user) return redirect(res, '/login');
+  const respond = (content, status = 200) => send(res, 'Kho hàng', content, user, session, status, url.pathname);
+  if (url.pathname !== '/inventory/low-stock' && user.role !== 'admin') return respond('<main class="workspace"><h1>Bạn không có quyền quản lý kho.</h1><a class="text-link" href="/products">Về sản phẩm</a></main>', 403);
+  const formPage = ['/inventory/receive', '/inventory/adjust'].includes(url.pathname);
+  if (req.method !== 'GET' && !(formPage && req.method === 'POST')) {
+    res.setHeader('Allow', formPage ? 'GET, POST' : 'GET');
+    return respond('<main class="workspace"><h1>Phương thức không được hỗ trợ.</h1></main>', 405);
   }
-
-  // ADMIN: NHẬP KHO & ĐIỀU CHỈNH KIỂM KÊ
-  if (
-    (url.pathname === "/inventory/receive" ||
-      url.pathname === "/inventory/adjust") &&
-    req.method === "POST"
-  ) {
-    if (!user || user.role !== "admin") {
-      res.writeHead(403, { "Content-Type": "text/plain; charset=utf-8" });
-      return res.end("Lỗi 403: Chỉ Admin mới được thao tác kho.");
-    }
-
-    const body = await parseForm(req);
-
-    if (body.get("csrf") && body.get("csrf") !== session.csrfToken) {
-      res.writeHead(403, { "Content-Type": "text/plain; charset=utf-8" });
-      return res.end("Lỗi xác thực CSRF.");
-    }
-
-    const productId = parseInt(body.get("product_id"));
-    const quantity = parseInt(body.get("quantity"));
-    const type =
-      url.pathname === "/inventory/receive" ? "IN" : body.get("type");
-    const note = body.get("note") || null;
-
-    const client = await pool.connect();
-    try {
-      await client.query("BEGIN");
-      await applyStockChange(client, productId, type, quantity, user.id, note);
-      await client.query("COMMIT");
-      res.writeHead(302, { Location: "/inventory/history" });
-      return res.end();
-    } catch (err) {
-      await client.query("ROLLBACK");
-      res.writeHead(400, { "Content-Type": "text/plain; charset=utf-8" });
-      return res.end(`Lỗi thao tác kho: ${err.message}`);
-    } finally {
-      client.release();
-    }
+  const mode = url.pathname === '/inventory/receive' ? 'receive' : 'adjust';
+  const renderForm = async (values = {}, error = '', status = 200) => respond(stockFormPage(await productRepository.list({ status: 'active' }), session, { mode, values, error }), status);
+  if (req.method === 'GET') {
+    if (formPage) return renderForm();
+    const lowStock = url.pathname === '/inventory/low-stock';
+    const rows = lowStock ? await inventoryRepository.lowStock() : await inventoryRepository.history();
+    if (req.headers.accept?.includes('application/json')) return json(res, rows);
+    const notices = { receive: 'Đã nhập kho và cập nhật giá bán theo quy tắc hiện tại.', adjust: 'Đã ghi nhận kiểm kê và cập nhật giá bán theo quy tắc hiện tại.' };
+    const saved = url.searchParams.get('saved');
+    return respond(lowStock ? lowStockPage(rows) : movementHistoryPage(rows, { title: 'Lịch sử kho', notice: Object.hasOwn(notices, saved) ? notices[saved] : '' }));
   }
-
-  // ADMIN: XEM LỊCH SỬ KHO
-  if (url.pathname === "/inventory/history" && req.method === "GET") {
-    if (!user || user.role !== "admin") return false;
-
-    const history = await pool.query(`
-      SELECT s.*, p.name as product_name, u.name as user_name FROM public.stock_movements s
-      JOIN public.products p ON s.product_id = p.id
-      JOIN public.users u ON s.user_id = u.id
-      ORDER BY s.created_at DESC LIMIT 100
-    `);
-    res.writeHead(200, { "Content-Type": "application/json; charset=utf-8" });
-    return res.end(JSON.stringify(history.rows));
+  if (!(req.headers['content-type'] || '').toLowerCase().startsWith('application/x-www-form-urlencoded')) return renderForm({}, 'Biểu mẫu không được hỗ trợ.', 415);
+  const form = await readForm(req);
+  if (!form.csrf || form.csrf !== session.csrf) return renderForm(form, 'Phiên biểu mẫu không hợp lệ. Hãy tải lại trang và thử lại.', 403);
+  try {
+    const type = mode === 'receive' ? 'IN' : form.type;
+    if (mode === 'adjust' && !['ADJUST_IN', 'ADJUST_OUT'].includes(type)) invalid('Kiểm kê chỉ cho phép tăng hoặc giảm tồn.');
+    await transaction(pool, client => applyStockChange(client, form.product_id, type, form.quantity, user.id, form.note));
+    return redirect(res, `/inventory/history?saved=${mode}`);
+  } catch (error) {
+    if (error.status) return renderForm(form, error.message, error.status);
+    throw error;
   }
-
-  return false;
 }
 
 module.exports = { inventoryRoutes };

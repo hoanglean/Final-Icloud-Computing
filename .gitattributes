@@ -1,0 +1,2 @@
+# Migration checksums must stay identical across operating systems.
+database/migrations/*.sql text eol=lf

@@ -1,7 +1,6 @@
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
-const fs = require('node:fs');
-const path = require('node:path');
+const { applySchema } = require('./helpers/schema');
 const { PGlite } = require('@electric-sql/pglite');
 const { createApp } = require('../src/app');
 const { hashPassword } = require('../src/services/password');
@@ -33,7 +32,7 @@ test('PostgreSQL authentication and permissions', async () => {
     };
   }
   try {
-    await db.exec(fs.readFileSync(path.join(__dirname, '../database/migrations/001_inventory_pricing.sql'), 'utf8'));
+    await applySchema(db);
     const passwordHash = await hashPassword('Initial@123');
     for (const role of ['admin', 'staff']) await db.query('INSERT INTO users(name,email,role,password_hash) VALUES ($1,$2,$3,$4)', [role, `${role}@test.invalid`, role, passwordHash]);
     base = await start();

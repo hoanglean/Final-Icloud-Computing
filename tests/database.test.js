@@ -1,7 +1,6 @@
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
-const fs = require('node:fs');
-const path = require('node:path');
+const { applySchema } = require('./helpers/schema');
 const { PGlite } = require('@electric-sql/pglite');
 const { createPostgresUserRepository } = require('../src/repositories/users-postgres');
 const { hashPassword, matches } = require('../src/services/password');
@@ -10,7 +9,7 @@ test('PostgreSQL schema and account repository', async t => {
   const db = new PGlite();
   try {
     await db.exec('CREATE ROLE anon; CREATE ROLE authenticated;');
-    await db.exec(fs.readFileSync(path.join(__dirname, '../database/migrations/001_inventory_pricing.sql'), 'utf8'));
+    await applySchema(db);
     const hash = await hashPassword('Initial@123');
     for (const [name, email, role] of [['Admin', 'admin@test.local', 'admin'], ['Staff', 'staff@test.local', 'staff'], ['Other', 'other@test.local', 'staff']]) {
       await db.query('INSERT INTO users(name, email, role, password_hash) VALUES ($1, $2, $3, $4)', [name, email, role, hash]);

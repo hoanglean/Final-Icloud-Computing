@@ -1,78 +1,39 @@
-const { applyStockChange } = require("../services/inventory");
+const { readForm, redirect, send, json } = require('../utils/http');
+const { transaction } = require('../utils/transaction');
+const { applyStockChange } = require('../services/inventory');
+const { stockFormPage, movementHistoryPage } = require('../views/stock');
 
-const parseForm = (req) =>
-  new Promise((resolve) => {
-    let body = "";
-    req.on("data", (chunk) => (body += chunk.toString()));
-    req.on("end", () => resolve(new URLSearchParams(body)));
-  });
-
-async function salesRoutes(req, res, context) {
-  const { url, user, session, pool } = context;
-
-  // NHÂN VIÊN: BÁN HÀNG
-  if (url.pathname === "/sales" && req.method === "POST") {
-    if (!user || user.role !== "staff") {
-      res.writeHead(403, { "Content-Type": "text/plain; charset=utf-8" });
-      return res.end("Lỗi 403: Chỉ nhân viên mới được bán hàng.");
-    }
-
-    const body = await parseForm(req);
-
-    // Kiểm tra bảo mật CSRF thủ công
-    if (body.get("csrf") && body.get("csrf") !== session.csrfToken) {
-      res.writeHead(403, { "Content-Type": "text/plain; charset=utf-8" });
-      return res.end("Lỗi xác thực CSRF.");
-    }
-
-    const productId = parseInt(body.get("product_id"));
-    const quantity = parseInt(body.get("quantity"));
-
-    const client = await pool.connect();
-    try {
-      await client.query("BEGIN");
-      await applyStockChange(client, productId, "SALE", quantity, user.id);
-      await client.query("COMMIT");
-      res.writeHead(302, { Location: "/sales/history" });
-      return res.end();
-    } catch (err) {
-      await client.query("ROLLBACK");
-      res.writeHead(400, { "Content-Type": "text/plain; charset=utf-8" });
-      return res.end(`Lỗi giao dịch bán hàng: ${err.message}`);
-    } finally {
-      client.release();
-    }
+async function salesRoutes(req, res, { url, user, session, pool, productRepository, inventoryRepository }) {
+  if (!['/sales', '/sales/history', '/admin/sales-history'].includes(url.pathname)) return false;
+  if (!user) return redirect(res, '/login');
+  const respond = (content, status = 200) => send(res, 'Bán hàng', content, user, session, status, url.pathname);
+  const adminHistory = url.pathname === '/admin/sales-history';
+  if (user.role !== (adminHistory ? 'admin' : 'staff')) return respond('<main class="workspace"><h1>Bạn không có quyền sử dụng chức năng này.</h1><a class="text-link" href="/products">Về sản phẩm</a></main>', 403);
+  if (req.method !== 'GET' && !(url.pathname === '/sales' && req.method === 'POST')) {
+    res.setHeader('Allow', url.pathname === '/sales' ? 'GET, POST' : 'GET');
+    return respond('<main class="workspace"><h1>Phương thức không được hỗ trợ.</h1></main>', 405);
   }
-
-  // NHÂN VIÊN: XEM LỊCH SỬ CÁ NHÂN
-  if (url.pathname === "/sales/history" && req.method === "GET") {
-    if (!user || user.role !== "staff") return false;
-
-    const result = await pool.query(
-      `SELECT s.*, p.name as product_name, p.sku FROM public.stock_movements s 
-       JOIN public.products p ON s.product_id = p.id 
-       WHERE s.user_id = $1 AND s.type = 'SALE' ORDER BY s.created_at DESC`,
-      [user.id]
-    );
-    res.writeHead(200, { "Content-Type": "application/json; charset=utf-8" });
-    return res.end(JSON.stringify(result.rows));
+  const renderForm = async (values = {}, error = '', status = 200) => respond(stockFormPage(await productRepository.list({ status: 'active' }), session, { mode: 'sale', values, error }), status);
+  if (req.method === 'GET') {
+    if (url.pathname === '/sales') return renderForm();
+    const rows = await inventoryRepository.history({ salesOnly: true, userId: adminHistory ? null : user.id });
+    if (req.headers.accept?.includes('application/json')) return json(res, rows);
+    return respond(movementHistoryPage(rows, {
+      title: adminHistory ? 'Lịch sử bán hàng nhân viên' : 'Lịch sử bán của tôi',
+      salesOnly: true, showUser: adminHistory,
+      notice: !adminHistory && url.searchParams.get('saved') === 'sold' ? 'Đã ghi nhận giao dịch bán hàng.' : ''
+    }));
   }
-
-  // ADMIN: XEM TOÀN BỘ LỊCH SỬ BÁN
-  if (url.pathname === "/admin/sales-history" && req.method === "GET") {
-    if (!user || user.role !== "admin") return false;
-
-    const result = await pool.query(`
-      SELECT s.*, p.name as product_name, u.name as staff_name FROM public.stock_movements s 
-      JOIN public.products p ON s.product_id = p.id
-      JOIN public.users u ON s.user_id = u.id 
-      WHERE s.type = 'SALE' ORDER BY s.created_at DESC
-    `);
-    res.writeHead(200, { "Content-Type": "application/json; charset=utf-8" });
-    return res.end(JSON.stringify(result.rows));
+  if (!(req.headers['content-type'] || '').toLowerCase().startsWith('application/x-www-form-urlencoded')) return renderForm({}, 'Biểu mẫu không được hỗ trợ.', 415);
+  const form = await readForm(req);
+  if (!form.csrf || form.csrf !== session.csrf) return renderForm(form, 'Phiên biểu mẫu không hợp lệ. Hãy tải lại trang và thử lại.', 403);
+  try {
+    await transaction(pool, client => applyStockChange(client, form.product_id, 'SALE', form.quantity, user.id));
+    return redirect(res, '/sales/history?saved=sold');
+  } catch (error) {
+    if (error.status) return renderForm(form, error.message, error.status);
+    throw error;
   }
-
-  return false;
 }
 
 module.exports = { salesRoutes };

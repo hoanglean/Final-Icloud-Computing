@@ -25,7 +25,7 @@ function sidebar(user, currentPath) {
     const items = group.items.filter(item => (!item.adminOnly || admin) && (!item.staffOnly || user.role === 'staff'));
     return items.length ? `<section class="sidebar-group"><h2>${escape(group.title)}</h2>${items.map(item => link(item.path, admin && item.adminLabel ? item.adminLabel : item.label, item.icon)).join('')}</section>` : '';
   }).join('');
-  return `<aside class="sidebar"><details class="sidebar-menu" open><summary>Chức năng <span aria-hidden="true">☰</span></summary><nav class="sidebar-nav" aria-label="Chức năng nghiệp vụ">${link(roleHome(user.role), admin ? 'Tổng quan' : 'Trang chủ', 'home')}${groups}</nav></details></aside>`;
+  return `<aside class="sidebar"><input class="sidebar-toggle" type="checkbox" id="sidebar-toggle" aria-label="Mở hoặc đóng menu chức năng"><label class="sidebar-heading" for="sidebar-toggle"><span>Chức năng</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"></path></svg></label><nav class="sidebar-nav" aria-label="Chức năng nghiệp vụ">${link(roleHome(user.role), admin ? 'Tổng quan' : 'Trang chủ', 'home')}${groups}</nav></aside>`;
 }
 
 module.exports = { sidebar };
