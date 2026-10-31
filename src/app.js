@@ -15,12 +15,16 @@ const { categoryRoutes } = require('./routes/categories');
 const { createProductRepository } = require('./repositories/products');
 const { productRoutes } = require('./routes/products');
 const { userRoutes } = require('./routes/users');
+const { createInventoryRepository } = require('./repositories/inventory');
+const { inventoryRoutes } = require('./routes/inventory');
+const { salesRoutes } = require('./routes/sales');
 
 async function createApp({ pool = createPool() } = {}) {
   const root = path.join(__dirname, '..');
   const userRepository = createPostgresUserRepository(pool);
   const categoryRepository = createCategoryRepository(pool);
   const productRepository = createProductRepository(pool);
+  const inventoryRepository = createInventoryRepository(pool);
   try { await userRepository.all(); }
   catch (error) { await pool.end(); throw error; }
   const dummyHash = await hashPassword(crypto.randomBytes(32).toString('hex'));
@@ -39,10 +43,12 @@ async function createApp({ pool = createPool() } = {}) {
         return res.end(fs.readFileSync(path.join(root, 'public/css', url.pathname.slice(1))));
       }
       const users = await userRepository.all();
-      const context = { url, ...resolveAuth(req, res, users), users, userRepository, categoryRepository, productRepository, pool, attempts, dummyHash };
+      const context = { url, ...resolveAuth(req, res, users), users, userRepository, categoryRepository, productRepository, inventoryRepository, pool, attempts, dummyHash };
       if (url.pathname === '/categories' || url.pathname.startsWith('/categories/')) return await categoryRoutes(req, res, context);
       if (url.pathname === '/products' || url.pathname.startsWith('/products/')) return await productRoutes(req, res, context);
       if (url.pathname === '/users' || url.pathname.startsWith('/users/')) return await userRoutes(req, res, context);
+      if (await inventoryRoutes(req, res, context) !== false) return;
+      if (await salesRoutes(req, res, context) !== false) return;
       if (req.method === 'POST') return await authRoutes(req, res, context);
       return pageRoutes(req, res, context);
     } catch (error) {
