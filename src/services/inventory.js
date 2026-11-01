@@ -8,13 +8,14 @@ async function applyStockChange(client, productId, type, quantity, userId, note 
   userId = recordId(userId, 'Tài khoản');
   if (!['IN', 'SALE', 'RETURN', 'ADJUST_IN', 'ADJUST_OUT', 'DAMAGE'].includes(type)) invalid('Loại giao dịch kho không hợp lệ.');
   const reasonRequired = ['ADJUST_IN', 'ADJUST_OUT', 'DAMAGE'].includes(type);
-  note = reasonRequired || note?.trim() ? text(note, 'Ghi chú', 1000) : null;
+  note = reasonRequired || note?.trim() ? text(note, 'Ghi chú', 1000, { multiline: true }) : null;
   if (type === 'RETURN') relatedMovementId = recordId(relatedMovementId, 'Giao dịch bán gốc');
   else if (relatedMovementId !== null) invalid('Chỉ trả hàng mới được liên kết giao dịch bán gốc.');
 
   const actor = (await client.query('SELECT role FROM public.users WHERE id = $1 AND is_active = true FOR SHARE', [userId])).rows[0];
   if (!actor || actor.role !== (type === 'SALE' ? 'staff' : 'admin')) invalid('Tài khoản không có quyền thực hiện giao dịch này.', 403);
-  const product = (await client.query('SELECT stock, current_price AS "currentPrice" FROM public.products WHERE id = $1 AND is_active = true FOR UPDATE', [productId])).rows[0];
+  const product = (await client.query(`SELECT stock, current_price AS "currentPrice" FROM public.products
+    WHERE id = $1 AND (is_active = true OR $2::text IN ('RETURN', 'DAMAGE')) FOR UPDATE`, [productId, type])).rows[0];
   if (!product) invalid('Sản phẩm không tồn tại hoặc đã ngừng kinh doanh.', 404);
   const increasing = ['IN', 'RETURN', 'ADJUST_IN'].includes(type);
   const newStock = product.stock + (increasing ? quantity : -quantity);

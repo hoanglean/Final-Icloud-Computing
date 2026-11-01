@@ -18,6 +18,8 @@ const { userRoutes } = require('./routes/users');
 const { createInventoryRepository } = require('./repositories/inventory');
 const { inventoryRoutes } = require('./routes/inventory');
 const { salesRoutes } = require('./routes/sales');
+const { createRequestRepository } = require('./repositories/requests');
+const { requestsRoutes } = require('./routes/requests');
 const { createPricingRepository } = require('./repositories/pricing');
 const { pricingRoutes } = require('./routes/pricing');
 const { createReportsRepository } = require('./repositories/reports-postgres');
@@ -29,6 +31,7 @@ async function createApp({ pool = createPool() } = {}) {
   const categoryRepository = createCategoryRepository(pool);
   const productRepository = createProductRepository(pool);
   const inventoryRepository = createInventoryRepository(pool);
+  const requestRepository = createRequestRepository(pool);
   const pricingRepository = createPricingRepository(pool);
   const reportsRepository = createReportsRepository(pool);
   try { await userRepository.all(); }
@@ -57,6 +60,7 @@ async function createApp({ pool = createPool() } = {}) {
         categoryRepository,
         productRepository,
         inventoryRepository,
+        requestRepository,
         pricingRepository,
         reportsRepository,
         pool,
@@ -68,6 +72,7 @@ async function createApp({ pool = createPool() } = {}) {
       if (url.pathname === '/users' || url.pathname.startsWith('/users/')) return await userRoutes(req, res, context);
       if (await inventoryRoutes(req, res, context) !== false) return;
       if (await salesRoutes(req, res, context) !== false) return;
+      if (await requestsRoutes(req, res, context) !== false) return;
       if (await pricingRoutes(req, res, context) !== false) return;
       if (await dashboardRoutes(req, res, context) !== false) return;
       if (req.method === 'POST') return await authRoutes(req, res, context);
