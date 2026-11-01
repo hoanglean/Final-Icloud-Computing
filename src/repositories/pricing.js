@@ -1,7 +1,53 @@
 function createPricingRepository(pool) {
   return {
-    async listRules() {
-      const { rows } = await pool.query(`SELECT p.id AS "productId", p.name AS "productName", p.category_id AS "categoryId",
+    async listCategories() {
+      const { rows } = await pool.query(`SELECT id, name FROM public.categories ORDER BY lower(name), id`);
+      return rows;
+    },
+    async listRules({ q = '', categoryId = '', ruleStatus = 'all', stockStatus = 'all' } = {}) {
+      const conditions = [];
+      const values = [];
+
+      if (q && String(q).trim()) {
+        values.push(`%${String(q).trim()}%`);
+        const p1 = `$${values.length}`;
+        const numericId = parseInt(q, 10);
+        if (!isNaN(numericId) && String(numericId) === String(q).trim()) {
+          values.push(numericId);
+          const p2 = `$${values.length}`;
+          conditions.push(`(p.name ILIKE ${p1} OR p.id = ${p2})`);
+        } else {
+          conditions.push(`p.name ILIKE ${p1}`);
+        }
+      }
+
+      if (categoryId && String(categoryId).trim()) {
+        const catId = parseInt(categoryId, 10);
+        if (!isNaN(catId) && catId > 0) {
+          values.push(catId);
+          conditions.push(`p.category_id = $${values.length}`);
+        }
+      }
+
+      if (ruleStatus === 'enabled') {
+        conditions.push(`(r.id IS NOT NULL AND r.enabled = true)`);
+      } else if (ruleStatus === 'disabled') {
+        conditions.push(`(r.id IS NOT NULL AND r.enabled = false)`);
+      } else if (ruleStatus === 'unconfigured') {
+        conditions.push(`r.id IS NULL`);
+      }
+
+      if (stockStatus === 'low') {
+        conditions.push(`(r.id IS NOT NULL AND r.enabled = true AND p.stock <= r.low_stock)`);
+      } else if (stockStatus === 'high') {
+        conditions.push(`(r.id IS NOT NULL AND r.enabled = true AND p.stock >= r.high_stock)`);
+      } else if (stockStatus === 'normal') {
+        conditions.push(`(r.id IS NOT NULL AND r.enabled = true AND p.stock > r.low_stock AND p.stock < r.high_stock)`);
+      }
+
+      const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
+
+      const queryText = `SELECT p.id AS "productId", p.name AS "productName", p.category_id AS "categoryId",
         c.name AS "categoryName", p.base_price AS "basePrice", p.current_price AS "currentPrice", p.stock, p.is_active AS "isActive",
         r.id AS "ruleId", r.low_stock AS "lowStock", r.high_stock AS "highStock",
         r.increase_percent AS "increasePercent", r.discount_percent AS "discountPercent",
@@ -9,7 +55,10 @@ function createPricingRepository(pool) {
         FROM public.products p
         JOIN public.categories c ON c.id = p.category_id
         LEFT JOIN public.pricing_rules r ON r.product_id = p.id
-        ORDER BY p.is_active DESC, lower(p.name), p.id`);
+        ${whereClause}
+        ORDER BY p.is_active DESC, lower(p.name), p.id`;
+
+      const { rows } = await pool.query(queryText, values);
       return rows;
     },
     async findRuleByProductId(productId) {

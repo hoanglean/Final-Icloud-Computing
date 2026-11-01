@@ -241,6 +241,25 @@ test('dynamic pricing service and repository business rules', async t => {
     assert.equal(singleNoRule.productId, 3);
     assert.equal(singleNoRule.ruleId, null);
   });
+
+  await t.test('filters pricing rules by search query, category, rule status and stock status', async () => {
+    const searchRes = await pricingRepository.listRules({ q: 'Product One' });
+    assert.equal(searchRes.length, 1);
+    assert.equal(searchRes[0].productId, 1);
+
+    const idRes = await pricingRepository.listRules({ q: '2' });
+    assert.equal(idRes.length, 1);
+    assert.equal(idRes[0].productId, 2);
+
+    const enabledRes = await pricingRepository.listRules({ ruleStatus: 'enabled' });
+    assert.equal(enabledRes.every(p => p.ruleId && p.enabled), true);
+
+    const unconfiguredRes = await pricingRepository.listRules({ ruleStatus: 'unconfigured' });
+    assert.equal(unconfiguredRes.every(p => !p.ruleId), true);
+
+    const lowStockRes = await pricingRepository.listRules({ stockStatus: 'low' });
+    assert.equal(lowStockRes.every(p => p.stock <= p.lowStock), true);
+  });
 });
 
 test('pricing routes through authenticated HTTP and PostgreSQL', async t => {
@@ -372,6 +391,13 @@ test('pricing routes through authenticated HTTP and PostgreSQL', async t => {
     const recalc = await admin('/pricing/1/recalculate', { csrf });
     assert.equal(recalc.status, 303);
     assert.ok(recalc.location.includes('/pricing?saved=recalculated'));
+  });
+
+  await t.test('supports query filters on GET /pricing', async () => {
+    const res = await admin('/pricing?q=Mineral+Water');
+    assert.equal(res.status, 200);
+    assert.ok(res.text.includes('Mineral Water'));
+    assert.ok(res.text.includes('phù hợp bộ lọc'));
   });
 
   await t.test('enforces HTTP methods strictly', async () => {

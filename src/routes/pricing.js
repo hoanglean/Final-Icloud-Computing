@@ -47,10 +47,20 @@ async function pricingRoutes(req, res, { url, user, session, pricingRepository, 
 
   // GET /pricing
   if (isPricingBase) {
-    const products = await pricingRepository.listRules();
+    const q = url.searchParams.get('q') || '';
+    const categoryId = url.searchParams.get('category') || '';
+    const ruleStatus = url.searchParams.get('rule_status') || 'all';
+    const stockStatus = url.searchParams.get('stock_status') || 'all';
+    const filters = { q, categoryId, ruleStatus, stockStatus };
+
+    const [products, categories] = await Promise.all([
+      pricingRepository.listRules(filters),
+      pricingRepository.listCategories ? pricingRepository.listCategories() : []
+    ]);
     if (req.headers.accept?.includes('application/json')) return json(res, products);
     const saved = url.searchParams.get('saved');
-    return respond(pricingRulesPage(products, session, {
+    return respond(pricingRulesPage(products, categories, session, {
+      filters,
       notice: Object.hasOwn(notices, saved) ? notices[saved] : ''
     }));
   }

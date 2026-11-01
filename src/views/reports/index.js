@@ -7,6 +7,13 @@ function reportsPage({ summary = {}, byCategory = [], fluctuations = [], filters
     ? ((Number(summary.returns) / Number(summary.grossSales)) * 100).toFixed(1)
     : '0.0';
 
+  const exportParams = new URLSearchParams();
+  if (filters.period && filters.period !== 'all') exportParams.set('period', filters.period);
+  if (filters.fromDate) exportParams.set('from_date', filters.fromDate);
+  if (filters.toDate) exportParams.set('to_date', filters.toDate);
+  const exportQuery = exportParams.toString();
+  const exportUrl = `/reports/export${exportQuery ? `?${exportQuery}` : ''}`;
+
   const categoryRows = byCategory.map(c => `<tr>
     <th scope="row"><span class="category-name">${escape(c.categoryName)}</span></th>
     <td class="num" data-label="Đã bán">${c.itemsSold}</td>
@@ -15,6 +22,24 @@ function reportsPage({ summary = {}, byCategory = [], fluctuations = [], filters
     <td class="num" data-label="Giá trị trả">${money(c.returns)}</td>
     <td class="num" data-label="Doanh thu thuần"><strong>${money(c.netRevenue)}</strong></td>
   </tr>`).join('');
+
+  const totalSold = byCategory.reduce((sum, c) => sum + Number(c.itemsSold || 0), 0);
+  const totalGross = byCategory.reduce((sum, c) => sum + Number(c.grossSales || 0), 0);
+  const totalReturned = byCategory.reduce((sum, c) => sum + Number(c.itemsReturned || 0), 0);
+  const totalReturnsVal = byCategory.reduce((sum, c) => sum + Number(c.returns || 0), 0);
+  const totalNet = byCategory.reduce((sum, c) => sum + Number(c.netRevenue || 0), 0);
+
+  const categoryTableFooter = byCategory.length ? `
+    <tfoot>
+      <tr>
+        <th scope="row">Tổng cộng</th>
+        <td class="num" data-label="Tổng đã bán"><strong>${totalSold}</strong></td>
+        <td class="num" data-label="Tổng doanh số"><strong>${money(totalGross)}</strong></td>
+        <td class="num" data-label="Tổng đã trả"><strong>${totalReturned}</strong></td>
+        <td class="num" data-label="Tổng giá trị trả"><strong>${money(totalReturnsVal)}</strong></td>
+        <td class="num" data-label="Tổng doanh thu thuần"><strong>${money(totalNet)}</strong></td>
+      </tr>
+    </tfoot>` : '';
 
   const fluctuationRows = fluctuations.map(f => `<tr>
     <th scope="row">
@@ -33,21 +58,23 @@ function reportsPage({ summary = {}, byCategory = [], fluctuations = [], filters
         <h1>Báo cáo kinh doanh</h1>
         <p class="muted">Theo dõi doanh thu thực tế sau hoàn trả, phân tích theo danh mục và tần suất biến động giá.</p>
       </div>
-      <a class="button" href="/pricing/history">Xem nhật ký giá</a>
+      <div class="page-actions">
+        <a class="button-outline" href="/pricing/history">Xem nhật ký giá</a>
+        <a class="button" href="${exportUrl}" download>Xuất báo cáo (CSV)</a>
+      </div>
     </div>
 
     ${error ? `<div class="alert error" role="alert">${escape(error)}</div>` : ''}
     <form class="filter-form card report-filter" method="get" action="/reports">
       <div>
         <label for="filter-period">Khoảng thời gian</label>
-        <select id="filter-period" name="period" aria-describedby="period-help">
+        <select id="filter-period" name="period">
           <option value="all"${filters.period === 'all' || !filters.period ? ' selected' : ''}>Toàn bộ thời gian</option>
           <option value="today"${filters.period === 'today' ? ' selected' : ''}>Hôm nay</option>
           <option value="7_days"${filters.period === '7_days' ? ' selected' : ''}>7 ngày gần nhất</option>
           <option value="30_days"${filters.period === '30_days' ? ' selected' : ''}>30 ngày gần nhất</option>
           <option value="custom"${filters.period === 'custom' ? ' selected' : ''}>Tùy chọn khoảng ngày</option>
         </select>
-        <p class="small muted" id="period-help">Chọn khoảng thời gian rồi bấm Xem báo cáo. Để nhập ngày, chọn Tùy chọn khoảng ngày.</p>
       </div>
 
       <div>
@@ -115,6 +142,7 @@ function reportsPage({ summary = {}, byCategory = [], fluctuations = [], filters
             </tr>
           </thead>
           <tbody>${categoryRows}</tbody>
+          ${categoryTableFooter}
         </table>
       </div>
     ` : `
