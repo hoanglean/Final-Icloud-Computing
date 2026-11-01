@@ -1,8 +1,8 @@
 # Kho Việt — Quản lý kho và định giá động
 
-Ứng dụng quản lý cửa hàng dùng Node.js 22 trở lên, giao diện HTML/CSS và PostgreSQL trên Supabase. Đã có các chức năng chính của nhiệm vụ 1 và 2: tài khoản, danh mục, sản phẩm, ảnh sản phẩm, nhập kho, kiểm kê, bán hàng và lịch sử giao dịch, cùng nền tảng đăng nhập và phân quyền.
+Ứng dụng quản lý cửa hàng dùng Node.js 22 trở lên, giao diện HTML/CSS và PostgreSQL trên Supabase. Đã có các chức năng chính của nhiệm vụ 1, 2 và 4: tài khoản, danh mục, sản phẩm, ảnh sản phẩm, nhập kho, kiểm kê, bán hàng, lịch sử giao dịch và luồng yêu cầu trả hàng/hàng hỏng.
 
-Thông tin bên dưới phản ánh mã nguồn trên nhánh đang đọc tại ngày **31/10/2026**. Luồng yêu cầu trả hàng/hàng hỏng, màn hình quy tắc giá, báo cáo và triển khai công khai vẫn cần hoàn thiện. Tiến độ từng thành viên nằm trong [docs/TEAM.md](docs/TEAM.md).
+Thông tin bên dưới phản ánh mã nguồn trên nhánh đang đọc tại ngày **01/11/2026**. Màn hình quy tắc giá, báo cáo và triển khai công khai vẫn cần hoàn thiện. Tiến độ từng thành viên nằm trong [docs/TEAM.md](docs/TEAM.md).
 
 ## Chức năng và tiến độ
 
@@ -19,7 +19,7 @@ Thông tin bên dưới phản ánh mã nguồn trên nhánh đang đọc tại 
 | Nhập kho, kiểm kê | Admin nhập hàng, điều chỉnh tăng/giảm kèm lý do; kiểm tra tồn và cập nhật giá |
 | Cảnh báo tồn và lịch sử kho | Cả hai vai trò xem cảnh báo; admin xem lịch sử giao dịch kho |
 | Bán hàng và lịch sử bán | Nhân viên bán và xem lịch sử của mình; admin chỉ xem lịch sử bán của nhân viên |
-| Trả hàng, hàng hỏng và duyệt yêu cầu | Mới có menu, phân quyền và trang đang phát triển |
+| Trả hàng, hàng hỏng và duyệt yêu cầu | Nhân viên gửi/theo dõi yêu cầu của mình; admin xem, duyệt hoặc từ chối; duyệt cập nhật tồn, giao dịch và giá trong cùng transaction |
 | Màn hình quy tắc giá, lịch sử giá và báo cáo doanh thu | Chưa có xử lý nghiệp vụ hoàn chỉnh trên giao diện |
 | Triển khai Render | Chưa triển khai công khai |
 
@@ -225,7 +225,7 @@ Sơ đồ phản ánh các file trong bản đang phát triển; các file `.git
 npm test
 ```
 
-Lần kiểm tra ngày 31/10/2026: **55 kiểm thử đạt, 0 lỗi**. Bộ kiểm thử dùng PostgreSQL qua PGlite với dữ liệu riêng, áp dụng đầy đủ migration và không thay đổi database Supabase thật. Nội dung gồm:
+Lần kiểm tra ngày 01/11/2026: **63 kiểm thử đạt, 0 lỗi**. Bộ kiểm thử dùng PostgreSQL qua PGlite với dữ liệu riêng, áp dụng đầy đủ migration và không thay đổi database Supabase thật. Nội dung gồm:
 
 - Đăng nhập, đổi mật khẩu, CSRF, phân quyền và hết hiệu lực phiên.
 - Tạo/đổi quyền/khóa tài khoản, email trùng và bảo vệ admin cuối cùng.
@@ -234,10 +234,10 @@ Lần kiểm tra ngày 31/10/2026: **55 kiểm thử đạt, 0 lỗi**. Bộ ki�
 - Tính giá theo ngưỡng, min/max, quy tắc tắt, làm tròn, ghi lịch sử và hoàn tác khi lỗi.
 - Tải/thay/gỡ ảnh, quyền xem ảnh, ảnh giả/hỏng/quá lớn và hoàn tác ảnh cùng thay đổi sản phẩm.
 - Nhập kho, bán hàng, kiểm kê, CSRF, ID/số lượng sai, tồn không đủ, lịch sử theo người dùng, giá bán gốc và rollback tồn/giao dịch/giá.
-- Kiểm tra dịch vụ trả hàng/hàng hỏng; các ca này chưa thay thế kiểm thử luồng gửi và duyệt yêu cầu còn thiếu.
+- Gửi yêu cầu trả hàng/hàng hỏng; giới hạn trả theo giao dịch bán, phạm vi dữ liệu nhân viên, duyệt/từ chối một lần và rollback toàn bộ khi duyệt lỗi.
 
 Đã kiểm tra trên trình duyệt luồng nhập kho → bán hàng → kiểm kê và 7 màn hình kho/bán hàng ở chiều rộng 1440 px và 375 px bằng dữ liệu thử riêng.
 
-Kiểm tra kết nối thật bằng `npm run db:check`. PGlite dùng một kết nối; kiểm thử hiện tại chưa chứng minh hành vi khóa giữa nhiều kết nối PostgreSQL thật. Cần kiểm tra thêm trước khi triển khai, cùng các luồng yêu cầu và báo cáo khi được xây dựng.
+Kiểm tra kết nối thật bằng `npm run db:check`. PGlite dùng một kết nối; kiểm thử hiện tại chưa chứng minh hành vi khóa giữa nhiều kết nối PostgreSQL thật. Cần kiểm tra thêm trước khi triển khai.
 
-Phiên đăng nhập và giới hạn thử sai vẫn nằm trong RAM, mất khi khởi động lại và chưa dùng chung giữa các tiến trình. Trước khi triển khai công khai cần session store bền vững, HTTPS, cookie Secure và cấu hình host triển khai. Phần tiếp theo là yêu cầu trả hàng/hàng hỏng, màn hình quy tắc giá/lịch sử giá, thống kê doanh thu và tích hợp triển khai.
+Phiên đăng nhập và giới hạn thử sai vẫn nằm trong RAM, mất khi khởi động lại và chưa dùng chung giữa các tiến trình. Trước khi triển khai công khai cần session store bền vững, HTTPS, cookie Secure và cấu hình host triển khai. Phần tiếp theo là màn hình quy tắc giá/lịch sử giá, thống kê doanh thu và tích hợp triển khai.
