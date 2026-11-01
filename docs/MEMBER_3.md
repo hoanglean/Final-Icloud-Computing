@@ -22,16 +22,17 @@ Theo phân công đồ án Kho Việt, Thành viên 3 chịu trách nhiệm thi�
 | STT | Chức năng | Đường dẫn (Route) | Phân quyền | Trạng thái |
 |---|---|---|---|---|
 | 1 | Danh sách quy tắc định giá theo sản phẩm | `GET /pricing` | Admin | ✅ Hoàn thành |
-| 2 | Biểu mẫu cấu hình quy tắc định giá | `GET /pricing/:productId/edit` | Admin | ✅ Hoàn thành |
-| 3 | Lưu / Cập nhật quy tắc định giá | `POST /pricing/:productId` | Admin + CSRF | ✅ Hoàn thành |
-| 4 | Bật / Tắt quy tắc định giá nhanh | `POST /pricing/:productId/toggle` | Admin + CSRF | ✅ Hoàn thành |
-| 5 | Tính lại giá bán sản phẩm thủ công | `POST /pricing/:productId/recalculate` | Admin + CSRF | ✅ Hoàn thành |
-| 6 | Tra cứu Lịch sử biến động giá | `GET /pricing/history` | Admin | ✅ Hoàn thành |
-| 7 | Dashboard tổng quan KPI kinh doanh | `GET /admin` | Admin | ✅ Hoàn thành |
-| 8 | Báo cáo doanh thu & biến động giá | `GET /reports` | Admin | ✅ Hoàn thành |
-| 9 | Lọc báo cáo theo khoảng thời gian | `GET /reports?period=...` | Admin | ✅ Hoàn thành |
-| 10 | Tích hợp giao dịch kho tự động tính giá | Service layer (`recalculatePrice`) | Hệ thống | ✅ Hoàn thành |
-| 11 | Cấu hình triển khai Cloud Render | `render.yaml`, `src/server.js` | Hệ thống | ✅ Hoàn thành |
+| 2 | Bộ lọc & tìm kiếm quy tắc giá (tên, ID, danh mục, trạng thái, mức tồn) | `GET /pricing?q=...&category=...` | Admin | ✅ Hoàn thành |
+| 3 | Biểu mẫu cấu hình quy tắc định giá | `GET /pricing/:productId/edit` | Admin | ✅ Hoàn thành |
+| 4 | Lưu / Cập nhật quy tắc định giá | `POST /pricing/:productId` | Admin + CSRF | ✅ Hoàn thành |
+| 5 | Bật / Tắt quy tắc định giá nhanh | `POST /pricing/:productId/toggle` | Admin + CSRF | ✅ Hoàn thành |
+| 6 | Tính lại giá bán sản phẩm thủ công | `POST /pricing/:productId/recalculate` | Admin + CSRF | ✅ Hoàn thành |
+| 7 | Tra cứu Lịch sử biến động giá | `GET /pricing/history` | Admin | ✅ Hoàn thành |
+| 8 | Dashboard tổng quan KPI kinh doanh | `GET /admin` | Admin | ✅ Hoàn thành |
+| 9 | Báo cáo doanh thu & biến động giá | `GET /reports` | Admin | ✅ Hoàn thành |
+| 10 | Lọc báo cáo theo khoảng thời gian | `GET /reports?period=...` | Admin | ✅ Hoàn thành |
+| 12 | Tích hợp giao dịch kho tự động tính giá | Service layer (`recalculatePrice`) | Hệ thống | ✅ Hoàn thành |
+| 13 | Cấu hình triển khai Cloud Render | `render.yaml`, `src/server.js` | Hệ thống | ✅ Hoàn thành |
 
 ---
 
@@ -120,7 +121,7 @@ Hệ thống kiểm thử tự động sử dụng Node.js Test Runner kết h�
   ```powershell
   npm test
   ```
-- **Kết quả tổng thể:** **80 / 80 tests PASS (100% Đạt, 0 Lỗi)**.
+- **Kết quả tổng thể:** **91 / 91 tests PASS (100% Đạt, 0 Lỗi)**.
 
 ### Chi tiết các ca kiểm thử thuộc phạm vi Thành viên 3:
 | Tệp kiểm thử | Tên ca kiểm thử | Kết quả |
@@ -134,10 +135,12 @@ Hệ thống kiểm thử tự động sử dụng Node.js Test Runner kết h�
 | `tests/pricing.test.js` | Validation đầu vào nghiêm ngặt (`low_stock < high_stock`, % hợp lệ, `min <= max`) | ✅ PASS |
 | `tests/pricing.test.js` | Rollback giao dịch nguyên tử khi lưu quy tắc bị lỗi ghi lịch sử | ✅ PASS |
 | `tests/pricing.test.js` | Cấu trúc dữ liệu Repository trả về đầy đủ sản phẩm và quy tắc giá | ✅ PASS |
+| `tests/pricing.test.js` | Lọc dữ liệu quy tắc giá theo từ khóa tìm kiếm, danh mục, trạng thái quy tắc và mức tồn kho | ✅ PASS |
 | `tests/pricing.test.js` | Chặn khách chưa đăng nhập và nhân viên truy cập route `/pricing` (HTTP 403) | ✅ PASS |
 | `tests/pricing.test.js` | Admin truy cập giao diện thật `/pricing` và `/pricing/history` (không bị placeholder) | ✅ PASS |
 | `tests/pricing.test.js` | Lưu quy tắc qua HTTP POST với token CSRF và áp dụng giá mới ngay | ✅ PASS |
 | `tests/pricing.test.js` | Thao tác HTTP Bật/Tắt quy tắc và Tính lại giá thủ công hoạt động chuẩn xác | ✅ PASS |
+| `tests/pricing.test.js` | Lọc danh sách quy tắc định giá qua query parameters trên HTTP GET `/pricing` | ✅ PASS |
 | `tests/pricing.test.js` | Kiểm soát HTTP Methods (trả về 405 Method Not Allowed cho method sai) | ✅ PASS |
 | `tests/reports.test.js` | Tính toán chính xác các chỉ số KPI Dashboard (Tổng SP, Tồn kho, Giá trị vốn) | ✅ PASS |
 | `tests/reports.test.js` | Tính Doanh thu thuần = `SALE` &minus; `RETURN`; loại trừ `DAMAGE` và `ADJUST_*` | ✅ PASS |

@@ -26,6 +26,9 @@ input[aria-invalid="true"] { border-color: var(--color-error); }
 .primary, .button { min-height: 44px; display: inline-flex; align-items: center; justify-content: center; gap: var(--space-xs); padding: var(--space-sm) 20px; border-radius: var(--radius-control); background: var(--color-accent); color: var(--color-accent-ink); font-size: 14px; font-weight: 600; line-height: 20px; }
 .primary { width: 100%; margin-top: var(--space-lg); }
 .primary:hover, .button:hover, .primary:active { background: var(--color-accent-hover); }
+.button-outline { min-height: 44px; display: inline-flex; align-items: center; justify-content: center; gap: var(--space-xs); padding: var(--space-sm) 20px; border-radius: var(--radius-control); border: 1px solid var(--color-accent); background: var(--color-paper); color: var(--color-accent); font-size: 14px; font-weight: 600; line-height: 20px; text-decoration: none; }
+.button-outline:hover { background: var(--color-accent-soft); }
+.page-actions { display: inline-flex; align-items: center; gap: var(--space-sm); flex-wrap: wrap; }
 .text-link { display: inline-flex; align-items: center; min-height: 44px; font-size: 14px; color: var(--color-accent); text-decoration: underline; text-underline-offset: 4px; }
 .text-link:hover { color: var(--color-ink); }
 .alert { padding: var(--space-sm) var(--space-md); border-radius: var(--radius-control); font-size: 14px; line-height: 1.5; margin: var(--space-lg) 0; border: 1px solid; }
