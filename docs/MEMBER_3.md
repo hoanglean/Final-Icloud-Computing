@@ -3,7 +3,6 @@
 **Dự án:** Kho Việt — Inventory Management and Dynamic Pricing System  
 **Thành viên phụ trách:** Lê Cảm — Thành viên 3 (Member 3)  
 **Nhánh Git:** `feature/member-3-pricing-dashboard`  
-
 ---
 
 ## 1. PHẠM VI TRÁCH NHIỆM CỦA THÀNH VIÊN 3
@@ -41,25 +40,32 @@ Theo phân công đồ án Kho Việt, Thành viên 3 chịu trách nhiệm thi�
 ### 3.1. Thuật toán định giá động (Dynamic Pricing Algorithm)
 - **Gốc tính giá bất biến:** Giá tính toán luôn xuất phát từ **Giá cơ sở ban đầu (`products.base_price`)**, tuyệt đối **không** tính từ giá hiện tại (`current_price`) để loại bỏ hoàn toàn hiện tượng cộng dồn trượt giá (compounding price drift) khi thực hiện nhiều giao dịch liên tiếp.
 - **Quy tắc tính:**
-  - Nếu quy tắc chưa có hoặc đang bị tắt (`enabled = false`): $\text{Giá bán} = \text{base\_price}$.
-  - Nếu tồn kho khan hiếm ($\text{stock} \le \text{low\_stock}$): $\text{Giá thô} = \text{base\_price} \times (1 + \text{increase\_percent} / 100)$.
-  - Nếu tồn kho dư thừa ($\text{stock} \ge \text{high\_stock}$): $\text{Giá thô} = \text{base\_price} \times (1 - \text{discount\_percent} / 100)$.
-  - Nếu tồn kho trong khoảng bình thường: $\text{Giá thô} = \text{base\_price}$.
+  - Nếu quy tắc chưa có hoặc đang bị tắt (`enabled = false`):
+    > `Giá bán = base_price`
+  - Nếu tồn kho khan hiếm (`stock <= low_stock`):
+    > `Giá thô = base_price * (1 + increase_percent / 100)`
+  - Nếu tồn kho dư thừa (`stock >= high_stock`):
+    > `Giá thô = base_price * (1 - discount_percent / 100)`
+  - Nếu tồn kho trong khoảng bình thường (`low_stock < stock < high_stock`):
+    > `Giá thô = base_price`
 - **Chặn biên độ an toàn (Clamping):**
-  $$\text{Giá khống chế} = \min(\text{max\_price}, \max(\text{min\_price}, \text{Giá thô}))$$
-- **Làm tròn tiền tệ VND:** Làm tròn đến đơn vị đồng nguyên $\text{round}(\dots)$, chặn tối đa mức cực đại của `NUMERIC(14,2)` là $999.999.999.999$ đồng.
+  > `Giá khống chế = min(max_price, max(min_price, Giá thô))`
+- **Làm tròn tiền tệ VND:** Làm tròn đến đơn vị đồng nguyên `round(...)`, chặn tối đa mức cực đại của `NUMERIC(14,2)` là `999.999.999.999` đồng.
 
 ### 3.2. Tính toàn vẹn giao dịch (Atomic Shared Transactions)
 - Hàm `recalculatePrice(client, productId, changedBy, reason)` nhận client PostgreSQL đang mở giao dịch (`BEGIN`) từ bên ngoài (Orchestrator).
 - Khi Thành viên 1 đổi giá cơ sở (`saveProduct`) hoặc Thành viên 2 ghi nhận giao dịch kho (`applyStockChange`), hàm `recalculatePrice` được gọi trong **cùng transaction client**.
 - Nếu việc ghi nhận giá bán hoặc lịch sử giá gặp lỗi, toàn bộ transaction (kể cả việc trừ tồn kho hay sửa sản phẩm) sẽ bị `ROLLBACK` ngay lập tức, ngăn ngừa dữ liệu dở dang hoặc sai lệch số lượng.
-- Chỉ cập nhật `current_price` và chỉ ghi bản ghi mới vào `public.price_history` khi và chỉ khi: $\text{old\_price} \neq \text{new\_price}$.
+- Chỉ cập nhật `current_price` và chỉ ghi bản ghi mới vào `public.price_history` khi và chỉ khi: `old_price != new_price`.
 
 ### 3.3. Công thức Báo cáo Doanh thu thuần (Net Revenue Formulation)
 Doanh thu kinh doanh được tính toán nghiêm ngặt dựa trên dữ liệu giao dịch thật trong bảng `stock_movements`:
-$$\text{Doanh thu bán gộp (Gross Sales)} = \sum_{\text{type} = \text{'SALE'}} (\text{quantity} \times \text{unit\_price})$$
-$$\text{Giá trị hàng hoàn trả (Returns)} = \sum_{\text{type} = \text{'RETURN'}} (\text{quantity} \times \text{unit\_price})$$
-$$\mathbf{\text{Doanh thu thuần (Net Revenue)}} = \text{Doanh thu bán gộp} - \text{Giá trị hàng hoàn trả}$$
+- **Doanh thu bán gộp (Gross Sales):**
+  > `Gross Sales = Tổng (quantity * unit_price) của tất cả giao dịch type = 'SALE'`
+- **Giá trị hàng hoàn trả (Returns):**
+  > `Returns = Tổng (quantity * unit_price) của tất cả giao dịch type = 'RETURN'`
+- **Doanh thu thuần (Net Revenue):**
+  > `Net Revenue = Gross Sales - Returns`
 
 **Nguyên tắc loại trừ bất biến:**
 - Hàng hỏng (`DAMAGE`) là chi phí hao hụt kho hàng, tuyệt đối **không** được tính vào doanh thu hay hàng trả lại.
@@ -68,7 +74,7 @@ $$\mathbf{\text{Doanh thu thuần (Net Revenue)}} = \text{Doanh thu bán gộp} 
 
 ### 3.4. Định nghĩa Định giá vốn tồn kho trên Dashboard
 - Sử dụng **Giá cơ sở (`base_price`)** làm chuẩn đo lường:
-  $$\text{Tổng giá trị vốn tồn kho} = \sum_{\text{is\_active} = \text{true}} (\text{stock} \times \text{base\_price})$$
+  > `Tổng giá trị vốn tồn kho = Tổng (stock * base_price) của các sản phẩm đang hoạt động (is_active = true)`  
   *(Lý do: Giá cơ sở phản ánh đúng giá trị vốn tài sản nhập của cửa hàng, ổn định và không bị bóp méo bởi quy luật tăng giảm giá theo cung cầu ngắn hạn).*
 
 ---
@@ -119,8 +125,8 @@ Hệ thống kiểm thử tự động sử dụng Node.js Test Runner kết h�
 ### Chi tiết các ca kiểm thử thuộc phạm vi Thành viên 3:
 | Tệp kiểm thử | Tên ca kiểm thử | Kết quả |
 |---|---|---|
-| `tests/pricing.test.js` | Tính giá tăng khi tồn kho $\le$ ngưỡng thấp (`low_stock`) | ✅ PASS |
-| `tests/pricing.test.js` | Tính giá giảm khi tồn kho $\ge$ ngưỡng cao (`high_stock`), chặn bởi `min_price` | ✅ PASS |
+| `tests/pricing.test.js` | Tính giá tăng khi tồn kho ≤ ngưỡng thấp (`low_stock`) | ✅ PASS |
+| `tests/pricing.test.js` | Tính giá giảm khi tồn kho ≥ ngưỡng cao (`high_stock`), chặn bởi `min_price` | ✅ PASS |
 | `tests/pricing.test.js` | Chặn giá tối đa theo giá trần `max_price` khi % tăng vượt giới hạn | ✅ PASS |
 | `tests/pricing.test.js` | Tắt quy tắc giá tự động trả về `base_price`; bật lại áp dụng theo tồn kho | ✅ PASS |
 | `tests/pricing.test.js` | Tính giá nhiều lần không bị cộng dồn giá (no compounding) và không sinh lịch sử thừa | ✅ PASS |
