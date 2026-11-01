@@ -4,8 +4,8 @@ function send(res, title, content, user, session, status = 200, currentPath = ''
   res.writeHead(status, { 'Content-Type': 'text/html; charset=utf-8' });
   res.end(layout(title, content, user, session, currentPath));
 }
-function json(res, value) {
-  res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+function json(res, value, status = 200) {
+  res.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8' });
   res.end(JSON.stringify(value));
 }
 async function readForm(req) {

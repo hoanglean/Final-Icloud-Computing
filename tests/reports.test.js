@@ -27,6 +27,7 @@ function createTestPool(db) {
 
 test('dashboard and business reports repository logic', async t => {
   const db = new PGlite();
+  t.after(() => db.close());
   await applySchema(db);
   const pool = createTestPool(db);
   const reportsRepository = createReportsRepository(pool);
@@ -129,6 +130,37 @@ test('dashboard and business reports repository logic', async t => {
     assert.equal(fluctuations[1].productId, 2);
     assert.equal(fluctuations[1].changeCount, 1);
   });
+
+  await t.test('includes the original price when finding a price range', async () => {
+    await db.query(`INSERT INTO price_history(product_id, old_price, new_price, changed_by, reason)
+      VALUES (3, 50000, 45000, 1, 'Giảm giá lần đầu')`);
+    const row = (await reportsRepository.priceFluctuations()).find(item => item.productId === 3);
+    assert.equal(Number(row.lowestPrice), 45000);
+    assert.equal(Number(row.highestPrice), 50000);
+  });
+
+  await t.test('supports totals larger than a single product price or stock limit', async () => {
+    await db.exec('BEGIN');
+    try {
+      await db.exec(`UPDATE products SET stock = 2147483647, base_price = 999999999999, current_price = 999999999999 WHERE id IN (1, 2);
+        INSERT INTO stock_movements(product_id, type, quantity, unit_price, user_id, created_at)
+        VALUES (1, 'SALE', 2147483647, 999999999999, 2, '2099-01-01T00:00:00Z'),
+               (1, 'SALE', 2, 999999999999, 2, '2099-01-01T00:00:00Z')`);
+      const stats = await reportsRepository.dashboardSummary();
+      assert.equal(Number(stats.totalStock), 4294967296);
+      assert.ok(Number(stats.totalValuation) > 1e12);
+      const revenue = await reportsRepository.revenueSummary({ fromDate: '2099-01-01T00:00:00Z' });
+      assert.equal(Number(revenue.itemsSold), 2147483649);
+      assert.equal(String(revenue.grossSales).split('.')[0], (2147483649n * 999999999999n).toString());
+      const { reportsPage } = require('../src/views/reports');
+      const page = reportsPage({ summary: revenue });
+      assert.ok(page.includes('2.147.483.648.997.852.516.351'));
+      const categories = await reportsRepository.revenueByCategory({ fromDate: '2099-01-01T00:00:00Z' });
+      assert.equal(Number(categories[0].itemsSold), 2147483649);
+    } finally {
+      await db.exec('ROLLBACK');
+    }
+  });
 });
 
 test('dashboard and reports HTTP routes integration', async t => {
@@ -146,6 +178,11 @@ test('dashboard and reports HTTP routes integration', async t => {
     VALUES (1, 'P-TEST', 'Demo Product', 1, 15000, 15000, 10);`);
 
   const server = await createApp({ pool });
+  t.after(async () => {
+    server.closeAllConnections();
+    await new Promise(resolve => server.close(resolve));
+    await db.close();
+  });
   await new Promise((resolve, reject) => { server.once('error', reject); server.listen(0, '127.0.0.1', resolve); });
   const base = `http://127.0.0.1:${server.address().port}`;
 
@@ -211,5 +248,48 @@ test('dashboard and reports HTTP routes integration', async t => {
     assert.ok(rangeReport.text.includes('2026-01-01'));
   });
 
-  server.close();
+  const jsonOptions = { headers: { accept: 'application/json' } };
+  await t.test('preset ranges contain exactly 1, 7 or 30 Vietnam calendar days', async () => {
+    for (const [period, days] of [['today', 1], ['7_days', 7], ['30_days', 30]]) {
+      const result = await admin(`/reports?period=${period}`, null, jsonOptions);
+      assert.equal(result.status, 200);
+      const { filters } = JSON.parse(result.text);
+      assert.equal((Date.parse(filters.toDate) - Date.parse(filters.fromDate)) / 86400000 + 1, days);
+    }
+  });
+
+  await t.test('rejects invalid, impossible or reversed dates without returning 500 or fake totals', async () => {
+    for (const query of ['period=bogus', 'period=custom', 'from_date=2026-13-01', 'from_date=2026-02-30', 'from_date=2025-02-29', 'from_date=0000-01-01', 'to_date=garbage', 'from_date=2026-11-02&to_date=2026-11-01']) {
+      const result = await admin('/reports?' + query, null, jsonOptions);
+      assert.equal(result.status, 400, query);
+      assert.ok(JSON.parse(result.text).error);
+    }
+    const page = await admin('/reports?period=custom&from_date=2026-11-02&to_date=2026-11-01');
+    assert.equal(page.status, 400);
+    assert.ok(page.text.includes('role="alert"'));
+    assert.ok(page.text.includes('value="2026-11-02"'));
+    assert.ok(!page.text.includes('class="metrics-grid"'));
+    assert.equal((await admin('/reports?period=custom&from_date=2024-02-29', null, jsonOptions)).status, 200);
+    const toOnly = await admin('/reports?to_date=2026-01-01', null, jsonOptions);
+    assert.equal(JSON.parse(toOnly.text).filters.period, 'custom');
+  });
+
+  await t.test('includes the last microsecond of a selected day but excludes the next Vietnam day', async () => {
+    await db.exec(`INSERT INTO stock_movements(product_id, type, quantity, unit_price, user_id, created_at)
+      VALUES (1, 'SALE', 1, 15000, 2, '2026-01-01T16:59:59.999999Z'),
+             (1, 'SALE', 2, 15000, 2, '2026-01-01T17:00:00Z');
+      INSERT INTO price_history(product_id, old_price, new_price, changed_by, reason, created_at)
+      VALUES (1, 10000, 15000, 1, 'Cuối ngày', '2026-01-01T16:59:59.999999Z'),
+             (1, 15000, 18000, 1, 'Ngày tiếp theo', '2026-01-01T17:00:00Z')`);
+    const result = await admin('/reports?period=custom&from_date=2026-01-01&to_date=2026-01-01', null, jsonOptions);
+    assert.equal(result.status, 200);
+    const data = JSON.parse(result.text);
+    assert.equal(Number(data.summary.grossSales), 15000);
+    assert.equal(Number(data.byCategory[0].grossSales), 15000);
+    assert.equal(data.fluctuations[0].changeCount, 1);
+    assert.equal(Number(data.fluctuations[0].highestPrice), 15000);
+    const all = JSON.parse((await admin('/reports?period=all&from_date=2099-01-01', null, jsonOptions)).text);
+    assert.equal(all.filters.fromDate, '');
+    assert.equal(Number(all.summary.grossSales), 45000);
+  });
 });

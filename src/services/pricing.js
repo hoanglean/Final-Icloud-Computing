@@ -1,6 +1,6 @@
 const { requireAdmin } = require('./users');
 const { transaction } = require('../utils/transaction');
-const { invalid, recordId } = require('../utils/validation');
+const { invalid, recordId, activeValue } = require('../utils/validation');
 
 // The caller holds the product row lock and supplies its transaction client.
 // Cap whole-dong prices at the largest integer supported by NUMERIC(14,2).
@@ -60,7 +60,7 @@ function parsePricingRuleValues(form) {
     invalid('Giá tối đa phải lớn hơn hoặc bằng giá tối thiểu.');
   }
 
-  const enabled = form.enabled === undefined ? true : form.enabled === true || form.enabled === 'true';
+  const enabled = form.enabled === undefined ? true : activeValue(String(form.enabled));
 
   return {
     lowStock: lowStockNum,
@@ -100,7 +100,7 @@ async function savePricingRule(pool, actor, productId, form) {
 
 async function togglePricingRule(pool, actor, productId, enabled) {
   productId = recordId(productId, 'Mã sản phẩm');
-  const active = Boolean(enabled === true || enabled === 'true');
+  const active = activeValue(String(enabled));
   return transaction(pool, async client => {
     await requireAdmin(client, actor);
     const product = (await client.query('SELECT id FROM public.products WHERE id = $1 FOR UPDATE', [productId])).rows[0];

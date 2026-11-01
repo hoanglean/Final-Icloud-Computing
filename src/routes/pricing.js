@@ -61,8 +61,8 @@ async function pricingRoutes(req, res, { url, user, session, pricingRepository, 
     let productId = null;
     try {
       if (rawProductId) productId = recordId(rawProductId, 'Mã sản phẩm');
-    } catch {
-      productId = null;
+    } catch (error) {
+      return respond('<main class="workspace"><h1>Mã sản phẩm không hợp lệ.</h1><a class="text-link" href="/pricing/history">Về lịch sử giá</a></main>', error.status);
     }
     const [rows, allProducts] = await Promise.all([
       pricingRepository.history({ productId, limit: 100 }),
@@ -104,7 +104,8 @@ async function pricingRoutes(req, res, { url, user, session, pricingRepository, 
       await togglePricingRule(pool, user, productId, form.enabled);
       return redirect(res, '/pricing?saved=rule_toggled');
     } catch (error) {
-      const status = error.status || 500;
+      if (!error.status) throw error;
+      const status = error.status;
       const products = await pricingRepository.listRules();
       return respond(pricingRulesPage(products, session, { error: error.message }), status);
     }
@@ -117,7 +118,8 @@ async function pricingRoutes(req, res, { url, user, session, pricingRepository, 
       await recalculateProductPriceManually(pool, user, productId);
       return redirect(res, '/pricing?saved=recalculated');
     } catch (error) {
-      const status = error.status || 500;
+      if (!error.status) throw error;
+      const status = error.status;
       const products = await pricingRepository.listRules();
       return respond(pricingRulesPage(products, session, { error: error.message }), status);
     }
@@ -131,7 +133,8 @@ async function pricingRoutes(req, res, { url, user, session, pricingRepository, 
       await savePricingRule(pool, user, productId, form);
       return redirect(res, '/pricing?saved=rule_saved');
     } catch (error) {
-      const status = error.status || 400;
+      if (!error.status) throw error;
+      const status = error.status;
       const product = productId ? await pricingRepository.findRuleByProductId(productId) : null;
       if (!product) {
         const products = await pricingRepository.listRules();

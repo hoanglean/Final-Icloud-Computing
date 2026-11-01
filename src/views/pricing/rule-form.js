@@ -8,8 +8,8 @@ function pricingRuleForm(product, session, { error = '', values = {} } = {}) {
   const increasePercent = values.increasePercent ?? product.increasePercent ?? 10;
   const discountPercent = values.discountPercent ?? product.discountPercent ?? 10;
   const minPrice = values.minPrice ?? product.minPrice ?? Math.round(Number(product.basePrice) * 0.7);
-  const maxPrice = values.maxPrice ?? product.maxPrice ?? Math.round(Number(product.basePrice) * 1.5);
-  const enabled = values.enabled !== undefined ? Boolean(values.enabled === true || values.enabled === 'true') : product.enabled !== undefined ? Boolean(product.enabled) : true;
+  const maxPrice = values.maxPrice ?? product.maxPrice ?? Math.min(999999999999.99, Math.round(Number(product.basePrice) * 1.5));
+  const enabled = values.enabled !== undefined ? Boolean(values.enabled === true || values.enabled === 'true') : product.enabled != null ? Boolean(product.enabled) : true;
 
   return `<main class="workspace">
     <a class="text-link" href="/pricing">&larr; Về danh sách quy tắc định giá</a>

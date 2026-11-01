@@ -33,6 +33,7 @@ function createTestPool(db) {
 
 test('dynamic pricing service and repository business rules', async t => {
   const db = new PGlite();
+  t.after(() => db.close());
   await applySchema(db);
   const pool = createTestPool(db);
   const pricingRepository = createPricingRepository(pool);
@@ -195,6 +196,14 @@ test('dynamic pricing service and repository business rules', async t => {
       }),
       /Giá tối đa phải lớn hơn hoặc bằng giá tối thiểu/
     );
+    const before = await pricingRepository.findRuleByProductId(1);
+    for (const enabled of [undefined, null, '', 'yes', 'TRUE', '0', 'false123']) {
+      await assert.rejects(() => togglePricingRule(pool, adminActor, 1, enabled), /Trạng thái không hợp lệ/);
+      if (enabled !== undefined) await assert.rejects(() => savePricingRule(pool, adminActor, 1, {
+        lowStock: 5, highStock: 20, increasePercent: 10, discountPercent: 10, minPrice: 50000, maxPrice: 200000, enabled
+      }), /Trạng thái không hợp lệ/);
+    }
+    assert.deepEqual(await pricingRepository.findRuleByProductId(1), before);
   });
 
   await t.test('rolls back pricing rule when recalculate price or history fails', async () => {
@@ -249,6 +258,11 @@ test('pricing routes through authenticated HTTP and PostgreSQL', async t => {
     VALUES (1, 'BEV-1', 'Mineral Water', 1, 5000, 5000, 8);`);
 
   const server = await createApp({ pool });
+  t.after(async () => {
+    server.closeAllConnections();
+    await new Promise(resolve => server.close(resolve));
+    await db.close();
+  });
   await new Promise((resolve, reject) => { server.once('error', reject); server.listen(0, '127.0.0.1', resolve); });
   const base = `http://127.0.0.1:${server.address().port}`;
 
@@ -366,5 +380,37 @@ test('pricing routes through authenticated HTTP and PostgreSQL', async t => {
     assert.equal(del.allow, 'GET');
   });
 
-  server.close();
+  await t.test('a new rule defaults to enabled and malformed history filters are rejected', async () => {
+    await db.exec("INSERT INTO products(id, sku, name, category_id, base_price, current_price) VALUES (2, 'NEW', 'New rule', 1, 999999999999, 999999999999)");
+    const form = await admin('/pricing/2/edit');
+    assert.equal(form.status, 200);
+    assert.ok(form.text.includes('value="true" selected'));
+    assert.ok(form.text.includes('id="rule-max-price"'));
+    assert.ok(!form.text.includes('value="1499999999999"'));
+    assert.equal((await admin('/pricing/history?product_id=not-an-id')).status, 400);
+  });
+
+  await t.test('rejects missing CSRF and malformed toggle values without changing prices', async () => {
+    const csrf = (await admin('/pricing')).csrf;
+    const before = (await db.query('SELECT enabled FROM pricing_rules WHERE product_id=1')).rows[0].enabled;
+    assert.equal((await admin('/pricing/1/toggle', { enabled: 'false' })).status, 403);
+    assert.equal((await admin('/pricing/1/toggle', { csrf, enabled: 'not-a-state' })).status, 400);
+    assert.equal((await db.query('SELECT enabled FROM pricing_rules WHERE product_id=1')).rows[0].enabled, before);
+  });
+
+  await t.test('unexpected database errors stay private and roll back rule and price changes', async () => {
+    const csrf = (await admin('/pricing')).csrf;
+    const beforeProduct = (await db.query('SELECT current_price FROM products WHERE id=1')).rows[0];
+    const beforeRule = (await db.query('SELECT * FROM pricing_rules WHERE product_id=1')).rows[0];
+    await db.exec('ALTER TABLE price_history ADD CONSTRAINT private_failure_check CHECK (product_id <> 1) NOT VALID');
+    try {
+      const result = await admin('/pricing/1', { csrf, lowStock: '10', highStock: '100', increasePercent: '50', discountPercent: '10', minPrice: '1000', maxPrice: '10000', enabled: 'true' });
+      assert.equal(result.status, 500);
+      assert.ok(!result.text.includes('private_failure_check'));
+      assert.deepEqual((await db.query('SELECT current_price FROM products WHERE id=1')).rows[0], beforeProduct);
+      assert.deepEqual((await db.query('SELECT * FROM pricing_rules WHERE product_id=1')).rows[0], beforeRule);
+    } finally {
+      await db.exec('ALTER TABLE price_history DROP CONSTRAINT private_failure_check');
+    }
+  });
 });
