@@ -2,9 +2,11 @@ function invalid(message, status = 400) {
   throw Object.assign(new Error(message), { status });
 }
 
-function text(value, label, max) {
-  const result = (value || '').trim();
-  if (!result || [...result].length > max || /[\u0000-\u001f\u007f]/.test(result)) invalid(`${label} cần từ 1 đến ${max} ký tự và không chứa ký tự điều khiển.`);
+function text(value, label, max, { multiline = false } = {}) {
+  let result = (value || '').trim();
+  if (multiline) result = result.replace(/\r\n?/g, '\n');
+  const controls = multiline ? /[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]/ : /[\u0000-\u001f\u007f]/;
+  if (!result || [...result].length > max || controls.test(result)) invalid(`${label} cần từ 1 đến ${max} ký tự và không chứa ký tự điều khiển.`);
   return result;
 }
 

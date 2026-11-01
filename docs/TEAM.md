@@ -13,7 +13,7 @@ Tài liệu này chia phần việc cho bốn thành viên dựa trên mã ngu�
 - Thanh chức năng dùng chung theo vai trò tại `src/config/navigation.js` và `src/views/sidebar.js`.
 - Bảy bảng nghiệp vụ đã có: `users`, `categories`, `products`, `stock_movements`, `stock_requests`, `pricing_rules`, `price_history`. `schema_migrations` là bảng kỹ thuật, cần giữ lại cho công cụ migration.
 
-Đã có giao diện và xử lý cho tài khoản, danh mục, sản phẩm/ảnh, nhập kho, kiểm kê, bán hàng, lịch sử kho/bán, cảnh báo tồn thấp và luồng yêu cầu trả hàng/hàng hỏng. Hàm tính lại giá dùng chung đã tích hợp vào đổi giá cơ sở, thay đổi tồn và duyệt yêu cầu. Quản lý quy tắc giá, lịch sử giá và báo cáo còn là trang đang phát triển. Phiên đăng nhập và giới hạn thử sai vẫn lưu trong RAM; chưa triển khai công khai lên Render.
+Đã có giao diện và xử lý cho tài khoản, danh mục, sản phẩm/ảnh, kho/bán hàng, yêu cầu trả hàng/hàng hỏng, quản lý quy tắc giá, lịch sử giá, tổng quan và báo cáo. Hàm tính lại giá dùng chung đã tích hợp vào đổi giá cơ sở, thay đổi tồn và duyệt yêu cầu. Bản ghép TV3/TV4 hiện đã kiểm thử cục bộ, còn chờ duyệt tích hợp. Phiên đăng nhập và giới hạn thử sai vẫn lưu trong RAM; chưa triển khai công khai lên Render.
 
 ## 2 Phân công bốn thành viên
 
@@ -23,7 +23,7 @@ Giữ nguyên phạm vi bốn thành viên; ưu tiên dùng lại các phần đ
 | --- | --- | --- |
 | 1 | Đã có các chức năng chính: tài khoản, sản phẩm/ảnh, danh mục, xác thực và phân quyền; phối hợp hoàn thiện bảo mật triển khai | `src/routes/auth.js`, `users.js`, `products.js`, `categories.js`; service, repository, view và kiểm thử tương ứng |
 | 2 | Đã có các chức năng chính: nhập kho, bán hàng, kiểm kê, lịch sử kho/bán và cảnh báo tồn; cần duyệt tích hợp và kiểm tra khóa trên nhiều kết nối PostgreSQL thật | `src/routes/inventory.js`, `sales.js`, `src/services/inventory.js`, `src/repositories/inventory.js`, `src/views/stock/index.js`, `tests/inventory-sales.test.js` |
-| 3 | Đã có hàm tính lại giá; còn quản lý quy tắc, màn hình lịch sử giá, tổng quan, báo cáo và Render | Dùng lại `src/services/pricing.js`; cần thêm route/view cho giá, báo cáo và repository báo cáo; phối hợp sửa tổng quan |
+| 3 | Đã có quy tắc giá, lịch sử, tổng quan, báo cáo và cấu hình Render; còn kiểm chứng triển khai thực tế | `src/services/pricing.js`, `src/routes/pricing.js`, `dashboard.js`, repository và view tương ứng, `render.yaml` |
 | 4 | Đã hoàn thiện gửi/theo dõi yêu cầu trả hàng, hàng hỏng và luồng admin duyệt/từ chối | `src/routes/requests.js`, `src/services/requests.js`, `src/repositories/requests.js`, `src/views/requests/`, `tests/requests.test.js` |
 
 Mỗi thành viên làm cả giao diện, xử lý yêu cầu, truy vấn và kiểm thử cho phần mình. Giao diện đặt trong `src/views/` theo chức năng, kế thừa bố cục và CSS chung; không tạo một ứng dụng hoặc cơ chế đăng nhập riêng.
@@ -57,7 +57,7 @@ Cần làm tiếp:
 
 Đã có giao diện nhập kho, kiểm kê tăng/giảm có lý do, bán hàng cho nhân viên, lịch sử kho/bán và cảnh báo tồn thấp. Máy chủ kiểm tra quyền, CSRF, số lượng nguyên dương, tồn đủ và giới hạn số nguyên. Lịch sử cá nhân lọc theo người đăng nhập; admin chỉ xem lịch sử bán của nhân viên.
 
-`applyStockChange` khóa sản phẩm, ghi giao dịch với đơn giá gốc, cập nhật tồn và tính lại giá trong cùng transaction. Dịch vụ đã hỗ trợ IN, SALE, RETURN, ADJUST_IN, ADJUST_OUT và DAMAGE; RETURN/DAMAGE chưa có luồng yêu cầu ở giao diện. Một lần bán hiện ghi một sản phẩm; lịch sử tối đa 100 dòng, chưa có lọc thời gian/phân trang.
+`applyStockChange` khóa sản phẩm, ghi giao dịch với đơn giá gốc, cập nhật tồn và tính lại giá trong cùng transaction. IN, SALE, RETURN, ADJUST_IN, ADJUST_OUT và DAMAGE đã được dùng bởi luồng kho/bán và duyệt yêu cầu. Một lần bán hiện ghi một sản phẩm; lịch sử tối đa 100 dòng, chưa có lọc thời gian/phân trang.
 
 - [ ] Duyệt và tích hợp nhánh tính năng vào nhánh chính sau khi kiểm thử; không coi code chỉ có trên nhánh tính năng là đã có trên `main`.
 - [ ] Kiểm tra khóa và bán đồng thời bằng nhiều kết nối PostgreSQL thật. Kiểm thử PGlite hiện dùng một kết nối, chưa chứng minh hành vi này trên Supabase.
@@ -65,12 +65,12 @@ Cần làm tiếp:
 
 ### Người 3 và người 4 làm tiếp
 
-- **Người 3:** dùng lại hàm tính giá hiện có; làm quản lý quy tắc theo sản phẩm, tính lại giá từ giao diện, lịch sử giá, số liệu tổng quan, báo cáo doanh thu và cấu hình Render. Doanh thu phải tính SALE trừ RETURN, không cộng hàng hỏng/kiểm kê. Chưa có giao diện quản lý doanh thu hoàn chỉnh.
+- **Người 3:** đã có quản lý quy tắc, tính lại giá từ giao diện, lịch sử giá, tổng quan và báo cáo. Doanh thu tính SALE trừ RETURN, loại trừ hàng hỏng/kiểm kê. Bản ghép đã kiểm thử số liệu sau duyệt yêu cầu của người 4; còn hoàn thiện và kiểm chứng triển khai Render.
 - **Người 4:** đã làm gửi/theo dõi yêu cầu, danh sách admin duyệt/từ chối, kiểm tra quyền và CSRF. Nhân viên chỉ xem yêu cầu mình gửi và chỉ trả hàng từ lần bán của mình; yêu cầu PENDING được tính vào hạn mức trả để tránh tạo nhiều yêu cầu vượt số bán. Duyệt khóa yêu cầu và dùng `applyStockChange` cùng transaction; từ chối không đổi tồn. Kiểm thử HTTP/PostgreSQL bao gồm quyền, hạn mức, duyệt một lần và rollback.
 
 ## 3 Quyền và phạm vi dữ liệu
 
-Bảng gồm quyền cho các màn hình đã có và còn chờ triển khai: `/requests`, `/requests/return`, `/requests/damage`, `/pricing`, `/pricing/history` và `/reports`.
+Bảng dưới áp dụng cho các màn hình đã có trong bản ghép hiện tại, bao gồm yêu cầu, định giá và báo cáo.
 
 | Chức năng hoặc đường dẫn | Admin | Nhân viên |
 | --- | --- | --- |
@@ -126,7 +126,9 @@ Database đã có các ràng buộc và trigger kiểm tra người tạo giao d
 
 ## 7 Kiểm thử và thứ tự tích hợp
 
-Ngày 01/11/2026, `npm test` đạt **63/63 kiểm thử**. Hiện có các bộ auth, navigation, database, categories, management, product-images, inventory-sales và requests trong `tests/`. Bao phủ HTTP, phân quyền, dữ liệu đầu vào, ảnh, tính giá và rollback; thêm kiểm thử theo phần việc, `npm test` tự chạy các file `*.test.js`. Đã kiểm tra trình duyệt luồng nhập kho → bán hàng → kiểm kê và 7 màn hình kho/bán ở 1440 px và 375 px bằng dữ liệu thử riêng.
+Ngày 01/11/2026, `npm test` đạt **98/98 kiểm thử** sau khi ghép TV3 và TV4. Các bộ auth, navigation, database, categories, management, product-images, inventory-sales, pricing, reports và requests bao phủ quyền, dữ liệu, transaction và tích hợp doanh thu/lịch sử giá sau duyệt. Đã kiểm tra thêm trên trình duyệt 6 màn hình yêu cầu, tổng quan và báo cáo ở 1440 px và 375 px bằng dữ liệu riêng; vẫn cần kiểm tra khóa bằng nhiều kết nối PostgreSQL thật.
+
+Lý do và ghi chú nghiệp vụ hỗ trợ nhiều dòng, tối đa 1000 ký tự; tên/email vẫn chỉ một dòng. Có thể duyệt trả hàng từ lần bán cũ và yêu cầu hàng hỏng đã gửi trước khi sản phẩm ngừng bán, giữ nguyên trạng thái ngừng bán. Tạo yêu cầu trả khóa sản phẩm trước giao dịch bán, cùng thứ tự với dịch vụ kho để tránh đảo thứ tự khóa.
 
 | Người phụ trách | Các ca cần kiểm tra khi hoàn thiện |
 | --- | --- |
@@ -135,6 +137,6 @@ Ngày 01/11/2026, `npm test` đạt **63/63 kiểm thử**. Hiện có các bộ
 | 3 | Giá ở đúng ngưỡng thấp/cao; min/max; quy tắc tắt; không tăng giảm cộng dồn; lịch sử chỉ ghi khi giá đổi; doanh thu trừ hoàn trả |
 | 4 | Đã kiểm thử gửi/từ chối không đổi tồn; chỉ admin duyệt; không duyệt hai lần; trả không vượt số đã bán; hàng hỏng không vượt tồn; lỗi thì rollback toàn bộ |
 
-Sản phẩm/tài khoản, dịch vụ kho/định giá, nhập kho/bán hàng và luồng yêu cầu đã được ghép trong bản tính năng hiện tại. Thứ tự tiếp theo: duyệt tích hợp bản này → quản lý giá, báo cáo/tổng quan → hoàn thiện triển khai. Kiểm thử nhiều kết nối PostgreSQL thật vẫn còn cần thực hiện.
+Phần chính của cả bốn thành viên đã được ghép và kiểm thử cục bộ. Thứ tự tiếp theo: duyệt tích hợp bản này → kiểm tra nhiều kết nối PostgreSQL thật → hoàn thiện bảo mật và triển khai.
 
 Mỗi người làm nhánh Git theo tính năng và chạy `npm test` trước khi gộp. Khi cùng sửa `src/app.js`, navigation, CSS hoặc migration, thống nhất người ghép để tránh ghi đè. Trước khi đánh dấu hoàn thành, kiểm tra cả vai trò admin và nhân viên, đường dẫn trực tiếp, POST trái quyền và luồng lỗi; không chỉ kiểm tra menu hiển thị.

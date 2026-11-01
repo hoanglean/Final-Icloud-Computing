@@ -21,7 +21,7 @@ function requestFormPage({ type, options, session, isAdmin, values = {}, error =
       <input type="hidden" name="csrf" value="${escape(session.csrf)}">
       <div class="form-wide"><label for="request-reference">${referenceLabel}</label><select id="request-reference" name="${isReturn ? 'sale_id' : 'product_id'}" required><option value="">Chọn ${isReturn ? 'giao dịch' : 'sản phẩm'}</option>${optionList}</select></div>
       <div><label for="request-quantity">Số lượng</label><input id="request-quantity" name="quantity" type="number" min="1" max="2147483647" step="1" value="${escape(values.quantity || '')}" required inputmode="numeric"></div>
-      <div class="form-wide"><label for="request-reason">Lý do</label><textarea id="request-reason" name="reason" maxlength="1000" required>${escape(values.reason || '')}</textarea></div>
+      <div class="form-wide"><label for="request-reason">Lý do</label><textarea class="stock-note" id="request-reason" name="reason" maxlength="1000" required>${escape(values.reason || '')}</textarea></div>
       <p class="small form-wide">Gửi yêu cầu không làm thay đổi tồn kho hoặc giá bán.</p>
       <div class="form-wide"><button class="button" type="submit"${options.length ? '' : ' disabled'}>Gửi yêu cầu</button></div>
     </form>
@@ -42,10 +42,10 @@ function requestsPage(rows, { isAdmin, session, notice = '' }) {
       <td data-label="Loại">${requestTypes[row.type]}</td>
       <td data-label="Sản phẩm" class="wrap-text">${escape(row.productName)}<span class="category-id">ID: ${row.productId}${row.relatedMovementId ? ` · Bán #${row.relatedMovementId}` : ''}</span></td>
       <td data-label="Số lượng" class="num">${row.quantity}</td>
-      <td data-label="Lý do" class="wrap-text">${escape(row.reason)}</td>
+      <td data-label="Lý do" class="wrap-text multiline-text">${escape(row.reason)}</td>
       ${isAdmin ? `<td data-label="Người gửi" class="wrap-text">${escape(row.requesterName)}</td>` : ''}
       <td data-label="Trạng thái">${requestStatuses[row.status]}</td>
-      <td data-label="Xử lý" class="wrap-text">${row.reviewerName ? `${escape(row.reviewerName)}${row.reviewNote ? ` · ${escape(row.reviewNote)}` : ''}` : '—'}${reviewActions}</td>
+      <td data-label="Xử lý" class="wrap-text">${row.reviewerName ? `${escape(row.reviewerName)}${row.reviewNote ? ` · <span class="multiline-text">${escape(row.reviewNote)}</span>` : ''}` : '—'}${reviewActions}</td>
     </tr>`;
   }).join('');
   return `<main class="workspace"><div class="page-title"><div><h1>${isAdmin ? 'Duyệt yêu cầu' : 'Yêu cầu của tôi'}</h1><p class="muted">${isAdmin ? 'Xem yêu cầu trả hàng, hàng hỏng; duyệt hoặc từ chối mỗi yêu cầu đúng một lần.' : 'Chỉ hiển thị yêu cầu do tài khoản của bạn gửi.'}</p></div></div>

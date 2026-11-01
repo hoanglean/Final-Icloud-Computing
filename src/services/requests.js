@@ -4,7 +4,7 @@ const { applyStockChange } = require('./inventory');
 async function createReturnRequest(client, repository, { saleId, quantity, reason, requestedBy, role }) {
   saleId = recordId(saleId, 'Giao dịch bán');
   quantity = recordId(quantity, 'Số lượng');
-  reason = text(reason, 'Lý do', 1000);
+  reason = text(reason, 'Lý do', 1000, { multiline: true });
   requestedBy = recordId(requestedBy, 'Tài khoản');
   const result = await repository.createReturn(client, { saleId, quantity, reason, requestedBy, role });
   if (!result) invalid('Giao dịch bán không tồn tại.', 404);
@@ -16,7 +16,7 @@ async function createReturnRequest(client, repository, { saleId, quantity, reaso
 async function createDamageRequest(client, repository, { productId, quantity, reason, requestedBy }) {
   productId = recordId(productId, 'Sản phẩm');
   quantity = recordId(quantity, 'Số lượng');
-  reason = text(reason, 'Lý do', 1000);
+  reason = text(reason, 'Lý do', 1000, { multiline: true });
   requestedBy = recordId(requestedBy, 'Tài khoản');
   const result = await repository.createDamage(client, { productId, quantity, reason, requestedBy });
   if (!result) invalid('Sản phẩm không tồn tại hoặc đã ngừng kinh doanh.', 404);
@@ -27,7 +27,7 @@ async function reviewRequest(client, repository, { requestId, decision, reviewed
   requestId = recordId(requestId, 'Yêu cầu');
   reviewedBy = recordId(reviewedBy, 'Tài khoản');
   if (!['approve', 'reject'].includes(decision)) invalid('Quyết định duyệt không hợp lệ.');
-  reviewNote = reviewNote.trim() ? text(reviewNote, 'Ghi chú duyệt', 1000) : null;
+  reviewNote = reviewNote.trim() ? text(reviewNote, 'Ghi chú duyệt', 1000, { multiline: true }) : null;
 
   const request = await repository.findForUpdate(client, requestId);
   if (!request) invalid('Yêu cầu không tồn tại.', 404);

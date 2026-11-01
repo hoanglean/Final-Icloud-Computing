@@ -32,7 +32,7 @@ function movementHistoryPage(rows, { title, salesOnly = false, showUser = true, 
     ${!salesOnly ? `<td data-label="Loại">${movementNames[row.type] || escape(row.type)}</td>` : ''}
     <td data-label="Số lượng" class="num">${row.quantity}</td><td data-label="Đơn giá" class="num">${money(row.unitPrice)}</td>
     ${showUser ? `<td data-label="Người thực hiện" class="wrap-text">${escape(row.userName)}</td>` : ''}
-    ${!salesOnly ? `<td data-label="Ghi chú" class="wrap-text">${escape(row.note || '—')}</td>` : ''}
+    ${!salesOnly ? `<td data-label="Ghi chú" class="wrap-text multiline-text">${escape(row.note || '—')}</td>` : ''}
   </tr>`).join('');
   return `<main class="workspace"><div class="page-title"><div><h1>${title}</h1><p class="muted">Hiển thị tối đa 100 giao dịch gần nhất${salesOnly && !showUser ? ' do bạn thực hiện' : ''}. Thời gian theo giờ Việt Nam.</p></div></div>
     ${notice ? `<div class="alert success" role="status">${escape(notice)}</div>` : ''}

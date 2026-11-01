@@ -1,8 +1,8 @@
 # Kho Việt — Quản lý kho và định giá động
 
-Ứng dụng quản lý cửa hàng dùng Node.js 22 trở lên, giao diện HTML/CSS và PostgreSQL trên Supabase. Đã có các chức năng chính của nhiệm vụ 1, 2 và 4: tài khoản, danh mục, sản phẩm, ảnh sản phẩm, nhập kho, kiểm kê, bán hàng, lịch sử giao dịch và luồng yêu cầu trả hàng/hàng hỏng.
+Ứng dụng quản lý cửa hàng dùng Node.js 22 trở lên, giao diện HTML/CSS và PostgreSQL trên Supabase. Bản tính năng hiện tại đã ghép phần chính của cả bốn thành viên: tài khoản, danh mục, sản phẩm/ảnh, kho/bán hàng, định giá, tổng quan/báo cáo và yêu cầu trả hàng/hàng hỏng.
 
-Thông tin bên dưới phản ánh mã nguồn trên nhánh đang đọc tại ngày **01/11/2026**. Màn hình quy tắc giá, báo cáo và triển khai công khai vẫn cần hoàn thiện. Tiến độ từng thành viên nằm trong [docs/TEAM.md](docs/TEAM.md).
+Thông tin bên dưới phản ánh mã nguồn trên nhánh đang đọc tại ngày **01/11/2026**. Bản ghép và sửa lỗi cần được duyệt trước khi đưa lên `main`; triển khai công khai vẫn còn việc. Tiến độ từng thành viên nằm trong [docs/TEAM.md](docs/TEAM.md).
 
 ## Chức năng và tiến độ
 
@@ -20,10 +20,11 @@ Thông tin bên dưới phản ánh mã nguồn trên nhánh đang đọc tại 
 | Cảnh báo tồn và lịch sử kho | Cả hai vai trò xem cảnh báo; admin xem lịch sử giao dịch kho |
 | Bán hàng và lịch sử bán | Nhân viên bán và xem lịch sử của mình; admin chỉ xem lịch sử bán của nhân viên |
 | Trả hàng, hàng hỏng và duyệt yêu cầu | Nhân viên gửi/theo dõi yêu cầu của mình; admin xem, duyệt hoặc từ chối; duyệt cập nhật tồn, giao dịch và giá trong cùng transaction |
-| Màn hình quy tắc giá, lịch sử giá và báo cáo doanh thu | Chưa có xử lý nghiệp vụ hoàn chỉnh trên giao diện |
+| Quy tắc giá và lịch sử giá | Admin thêm/sửa, bật/tắt, tính lại giá và tra cứu lịch sử theo sản phẩm |
+| Tổng quan và báo cáo | Tổng tồn, cảnh báo, doanh thu thuần SALE trừ RETURN; lọc theo ngày Việt Nam, tổng hợp theo danh mục và biến động giá |
 | Triển khai Render | Chưa triển khai công khai |
 
-Giao diện có thanh chức năng theo vai trò và bố cục thích ứng cho máy tính, máy tính bảng, điện thoại. Trang tổng quan hiện chưa có thống kê doanh thu hoặc tồn kho.
+Giao diện có thanh chức năng theo vai trò và bố cục thích ứng cho máy tính, máy tính bảng, điện thoại. Tổng quan và báo cáo chỉ dành cho admin.
 
 ## Chạy ứng dụng
 
@@ -43,7 +44,7 @@ npm start
 
 Mở http://localhost:3000. Dùng `npm run dev` thay `npm start` nếu muốn tự khởi động lại khi sửa mã. Sau khi lấy phiên bản mới từ Git, chạy lại `npm ci` và `npm run db:migrate` trước khi mở ứng dụng.
 
-Không có `start.bat` trong dự án. Server hiện chỉ lắng nghe loopback và chưa được triển khai lên Render.
+Không có `start.bat` trong dự án. Server hỗ trợ `HOST` và `PORT`, mặc định `0.0.0.0:3000`; dùng `HOST=127.0.0.1` khi chỉ muốn chạy trên máy mình. Đã có `render.yaml`, chưa triển khai lên Render.
 
 ## Cơ sở dữ liệu
 
@@ -63,7 +64,7 @@ Các migration hiện có:
 
 Bảy bảng nghiệp vụ: `users`, `categories`, `products`, `stock_movements`, `stock_requests`, `pricing_rules`, `price_history`. `schema_migrations` là bảng kỹ thuật. Tất cả bật RLS; vai trò trình duyệt `anon` và `authenticated` không có quyền đọc hoặc ghi trực tiếp. Node.js dùng kết nối PostgreSQL riêng và kiểm tra quyền tại máy chủ; không dùng Supabase Auth ở bản hiện tại.
 
-Ràng buộc SQL kiểm tra tồn không âm, số lượng dương, giá hữu hạn, khóa ngoại, ngưỡng định giá, SALE chỉ do nhân viên tạo, trả đúng giá gốc và không vượt số đã bán, duyệt yêu cầu chỉ một lần bởi admin. Các ràng buộc này không tự cập nhật tồn hoặc giá. Dịch vụ `applyStockChange` khóa sản phẩm, ghi giao dịch, cập nhật tồn và gọi tính lại giá trong cùng transaction; có lỗi thì rollback toàn bộ. Luồng duyệt yêu cầu ở tầng ứng dụng chưa triển khai.
+Ràng buộc SQL kiểm tra tồn không âm, số lượng dương, giá hữu hạn, khóa ngoại, ngưỡng định giá, SALE chỉ do nhân viên tạo, trả đúng giá gốc và không vượt số đã bán, duyệt yêu cầu chỉ một lần bởi admin. Dịch vụ `applyStockChange` khóa sản phẩm, ghi giao dịch, cập nhật tồn và gọi tính lại giá trong cùng transaction. Duyệt yêu cầu cũng cập nhật trạng thái và liên kết giao dịch trong transaction này; có lỗi thì rollback toàn bộ.
 
 ## Sản phẩm và dữ liệu mẫu
 
@@ -99,12 +100,13 @@ Admin vào **Sản phẩm → Thêm sản phẩm/Sửa sản phẩm → Ảnh s�
 - Nhân viên vào **Bán hàng**, chọn sản phẩm và số lượng. Mỗi lần gửi ghi nhận một sản phẩm; không phải giỏ hàng nhiều sản phẩm. Máy chủ lấy giá hiện tại và kiểm tra tồn, không tin đơn giá từ trình duyệt.
 - Giao dịch bán lưu giá trước khi trừ tồn; giá tính lại sau giao dịch áp dụng cho lần bán tiếp theo. Lỗi ghi lịch sử hoặc tính giá sẽ hoàn tác cả thay đổi tồn.
 - Lịch sử kho và lịch sử bán hiển thị tối đa 100 giao dịch mới nhất; chưa có bộ lọc thời gian hoặc phân trang. Cảnh báo tồn thấp dùng ngưỡng `low_stock` của quy tắc sản phẩm, mặc định 10 khi chưa có quy tắc; trạng thái bật/tắt quy tắc giá hiện không thay đổi ngưỡng cảnh báo này.
-- Dịch vụ kho hỗ trợ cả `RETURN` và `DAMAGE` để dùng chung cho nhiệm vụ 4; hiện chưa có biểu mẫu gửi yêu cầu hoặc luồng duyệt để người dùng thực hiện hai nghiệp vụ này.
+- Nhân viên và admin gửi yêu cầu tại **Yêu cầu trả hàng/Báo hàng hỏng**; admin xử lý tại **Duyệt yêu cầu**. Gửi hoặc từ chối chưa đổi tồn; chỉ duyệt mới tạo giao dịch kho. Lý do hỗ trợ nhiều dòng, tối đa 1000 ký tự.
+- Giao dịch bán cũ vẫn được trả khi sản phẩm đã ngừng kinh doanh. Yêu cầu hàng hỏng đã gửi trước khi ngừng bán cũng duyệt được nếu còn đủ tồn. Xử lý yêu cầu không tự mở bán lại sản phẩm; tạo mới yêu cầu hàng hỏng vẫn chỉ chọn sản phẩm đang kinh doanh.
 
 ## Phân quyền
 
-- Nhân viên: tra cứu sản phẩm, giá bán, tồn, trạng thái và ảnh; bán hàng, xem lịch sử bán của mình và cảnh báo tồn thấp. Gửi/theo dõi yêu cầu còn chờ triển khai.
-- Admin: quản lý sản phẩm, ảnh, danh mục, tài khoản; nhập kho, kiểm kê, xem lịch sử kho, cảnh báo tồn và lịch sử bán nhân viên. Duyệt yêu cầu, màn hình định giá và báo cáo còn chờ triển khai.
+- Nhân viên: tra cứu sản phẩm, giá bán, tồn, trạng thái và ảnh; bán hàng, xem lịch sử bán của mình, cảnh báo tồn và gửi/theo dõi yêu cầu của mình.
+- Admin: quản lý sản phẩm, ảnh, danh mục, tài khoản; nhập kho, kiểm kê, xem lịch sử kho và bán nhân viên; gửi/duyệt yêu cầu, quản lý quy tắc giá, lịch sử giá và báo cáo.
 - Admin không được tự bán hàng hoặc vào lịch sử bán cá nhân. Route `/sales` và `/sales/history` chặn admin; `/admin/sales-history` chỉ dành cho admin.
 - Trang lịch sử bán nhân viên trong nhóm Quản trị truy vấn giao dịch thật; nhân viên không truy cập được trang này và lịch sử cá nhân được lọc theo tài khoản đăng nhập tại máy chủ.
 
@@ -140,6 +142,9 @@ Final-Icloud/
 │   │   ├── products.js                   # Tra cứu, quản lý sản phẩm và trả ảnh
 │   │   ├── inventory.js                  # Nhập kho, kiểm kê, lịch sử và cảnh báo tồn
 │   │   ├── sales.js                      # Bán hàng, lịch sử cá nhân và lịch sử cho admin
+│   │   ├── requests.js                   # Gửi, theo dõi và duyệt yêu cầu kho
+│   │   ├── pricing.js                    # Quy tắc giá, tính lại giá và lịch sử
+│   │   ├── dashboard.js                  # Tổng quan và bộ lọc báo cáo
 │   │   └── users.js                      # Tạo tài khoản, đổi vai trò và trạng thái
 │   ├── middleware/
 │   │   ├── auth.js                       # Xác thực phiên và kiểm tra vai trò
@@ -151,12 +156,16 @@ Final-Icloud/
 │   │   ├── products.js                   # Lưu sản phẩm, trạng thái, ảnh và tính giá
 │   │   ├── product-images.js             # Xác thực, thu nhỏ và chuẩn hóa ảnh WebP
 │   │   ├── inventory.js                  # Khóa sản phẩm, ghi giao dịch, cập nhật tồn và giá
+│   │   ├── requests.js                   # Hạn mức trả và duyệt yêu cầu cùng transaction
 │   │   └── pricing.js                    # Tính lại giá, ghi lịch sử bằng client transaction
 │   ├── repositories/
 │   │   ├── users-postgres.js             # Truy vấn tài khoản và phiên bản đăng nhập
 │   │   ├── categories.js                 # Truy vấn danh mục
 │   │   ├── products.js                   # Truy vấn sản phẩm và dữ liệu ảnh
-│   │   └── inventory.js                  # Truy vấn lịch sử và cảnh báo tồn thấp
+│   │   ├── inventory.js                  # Truy vấn lịch sử và cảnh báo tồn thấp
+│   │   ├── requests.js                   # Truy vấn yêu cầu và giao dịch có thể trả
+│   │   ├── pricing.js                    # Truy vấn quy tắc và lịch sử giá
+│   │   └── reports-postgres.js           # Tổng hợp tồn, doanh thu và biến động giá
 │   ├── utils/
 │   │   ├── html.js                       # Escape nội dung trước khi đưa vào HTML
 │   │   ├── http.js                       # Đọc form, chuyển hướng và trả trang HTML
@@ -174,6 +183,9 @@ Final-Icloud/
 │       ├── categories/index.js           # Danh sách và biểu mẫu danh mục
 │       ├── products/index.js             # Danh sách, bộ lọc, biểu mẫu sản phẩm và ảnh
 │       ├── stock/index.js                # Biểu mẫu kho/bán hàng, lịch sử và cảnh báo
+│       ├── requests/index.js             # Biểu mẫu, danh sách và thao tác duyệt yêu cầu
+│       ├── pricing/                      # Danh sách, biểu mẫu quy tắc và lịch sử giá
+│       ├── reports/index.js              # Bộ lọc và giao diện báo cáo
 │       └── users/index.js                # Danh sách và biểu mẫu tài khoản
 ├── public/                               # Tệp giao diện tĩnh
 │   ├── css/
@@ -202,10 +214,14 @@ Final-Icloud/
 │   ├── management.test.js                 # Tài khoản, sản phẩm, phân quyền và tính giá
 │   ├── product-images.test.js             # Tải ảnh, phân quyền, giới hạn và hoàn tác
 │   ├── inventory-sales.test.js            # Kho, bán hàng, phạm vi lịch sử và rollback
+│   ├── requests.test.js                   # Yêu cầu, lý do nhiều dòng, hàng ngừng bán và tích hợp
+│   ├── pricing.test.js                    # Quản lý quy tắc giá và phân quyền
+│   ├── reports.test.js                    # Khoảng ngày, tổng tiền và số liệu báo cáo
 │   └── helpers/schema.js                  # Áp dụng đầy đủ migration cho database thử
 ├── docs/
 │   ├── TEAM.md                           # Phân công và hướng dẫn phối hợp 4 thành viên
 │   ├── PROJECT.md                        # Thiết kế dự án
+│   ├── MEMBER_3.md                       # Tài liệu kỹ thuật ban đầu của thành viên 3
 │   └── Inventory_Dynamic_Pricing_Supabase.docx  # Tài liệu Word
 ├── node_modules/                         # Thư viện do npm cài, không đưa lên Git
 ├── .env                                  # Kết nối riêng của máy, không đưa lên Git
@@ -214,6 +230,7 @@ Final-Icloud/
 ├── package.json                          # Thư viện, yêu cầu Node.js và lệnh chạy
 ├── package-lock.json                     # Khóa phiên bản thư viện
 ├── report_inventory.md                   # Ghi chú kho/bán hàng từ lần triển khai ban đầu
+├── render.yaml                           # Cấu hình triển khai Render, chưa triển khai thực tế
 └── README.md                             # Hướng dẫn chạy và tổng quan dự án
 ```
 
@@ -225,7 +242,7 @@ Sơ đồ phản ánh các file trong bản đang phát triển; các file `.git
 npm test
 ```
 
-Lần kiểm tra ngày 01/11/2026: **63 kiểm thử đạt, 0 lỗi**. Bộ kiểm thử dùng PostgreSQL qua PGlite với dữ liệu riêng, áp dụng đầy đủ migration và không thay đổi database Supabase thật. Nội dung gồm:
+Lần kiểm tra ngày 01/11/2026: **98 kiểm thử đạt, 0 lỗi**. Bộ kiểm thử dùng PostgreSQL qua PGlite với dữ liệu riêng, áp dụng đầy đủ migration và không thay đổi database Supabase thật. Nội dung gồm:
 
 - Đăng nhập, đổi mật khẩu, CSRF, phân quyền và hết hiệu lực phiên.
 - Tạo/đổi quyền/khóa tài khoản, email trùng và bảo vệ admin cuối cùng.
@@ -235,9 +252,13 @@ Lần kiểm tra ngày 01/11/2026: **63 kiểm thử đạt, 0 lỗi**. Bộ ki�
 - Tải/thay/gỡ ảnh, quyền xem ảnh, ảnh giả/hỏng/quá lớn và hoàn tác ảnh cùng thay đổi sản phẩm.
 - Nhập kho, bán hàng, kiểm kê, CSRF, ID/số lượng sai, tồn không đủ, lịch sử theo người dùng, giá bán gốc và rollback tồn/giao dịch/giá.
 - Gửi yêu cầu trả hàng/hàng hỏng; giới hạn trả theo giao dịch bán, phạm vi dữ liệu nhân viên, duyệt/từ chối một lần và rollback toàn bộ khi duyệt lỗi.
+- Trả hàng ngừng kinh doanh, duyệt hàng hỏng đã gửi trước khi ngừng bán, lý do nhiều dòng và doanh thu/lịch sử giá sau xử lý yêu cầu.
+- Quản lý quy tắc giá, báo cáo theo ngày Việt Nam, ngày sai/đảo ngược, giao dịch sát cuối ngày và tổng tiền lớn.
 
 Đã kiểm tra trên trình duyệt luồng nhập kho → bán hàng → kiểm kê và 7 màn hình kho/bán hàng ở chiều rộng 1440 px và 375 px bằng dữ liệu thử riêng.
 
+Bản ghép TV3/TV4 đã kiểm tra thêm 6 màn hình yêu cầu, tổng quan và báo cáo ở 1440 px và 375 px; gửi/duyệt/từ chối, lý do nhiều dòng và trả sản phẩm ngừng bán đều chạy được.
+
 Kiểm tra kết nối thật bằng `npm run db:check`. PGlite dùng một kết nối; kiểm thử hiện tại chưa chứng minh hành vi khóa giữa nhiều kết nối PostgreSQL thật. Cần kiểm tra thêm trước khi triển khai.
 
-Phiên đăng nhập và giới hạn thử sai vẫn nằm trong RAM, mất khi khởi động lại và chưa dùng chung giữa các tiến trình. Trước khi triển khai công khai cần session store bền vững, HTTPS, cookie Secure và cấu hình host triển khai. Phần tiếp theo là màn hình quy tắc giá/lịch sử giá, thống kê doanh thu và tích hợp triển khai.
+Phiên đăng nhập và giới hạn thử sai vẫn nằm trong RAM, mất khi khởi động lại và chưa dùng chung giữa các tiến trình. Trước khi triển khai công khai cần session store bền vững, HTTPS, cookie Secure và cấu hình host triển khai. Phần tiếp theo là duyệt tích hợp bản ghép, kiểm tra nhiều kết nối PostgreSQL thật và hoàn thiện triển khai.

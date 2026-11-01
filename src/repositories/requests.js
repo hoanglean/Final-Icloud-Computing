@@ -48,6 +48,10 @@ function createRequestRepository(pool) {
     },
 
     async createReturn(client, { saleId, quantity, reason, requestedBy, role }) {
+      // Match inventory's product-before-sale lock order when approvals run concurrently.
+      await client.query(`SELECT id FROM public.products WHERE id = (
+        SELECT product_id FROM public.stock_movements WHERE id = $1 AND type = 'SALE'
+      ) FOR UPDATE`, [saleId]);
       const sale = (await client.query(`SELECT id, product_id AS "productId", quantity, user_id AS "userId"
         FROM public.stock_movements WHERE id = $1 AND type = 'SALE' FOR UPDATE`, [saleId])).rows[0];
       if (!sale) return null;

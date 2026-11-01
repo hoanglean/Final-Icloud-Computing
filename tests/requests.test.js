@@ -231,6 +231,60 @@ test('return and damaged-stock requests through authenticated HTTP and PostgreSQ
       assert.equal(movement.user_id, 1);
       assert.equal(Number((await db.query('SELECT current_price FROM products WHERE id=1')).rows[0].current_price), 110000);
     });
+
+    await t.test('returns retired products and handles pending damage without reopening sales; reports stay consistent', async () => {
+      const jsonOptions = { headers: { accept: 'application/json' } };
+      for (const path of ['/admin', '/pricing', '/pricing/history', '/reports']) {
+        const page = await admin(path);
+        assert.equal(page.status, 200, path);
+        assert.ok(!page.text.includes('module-placeholder'), path);
+      }
+      const previousRevenue = JSON.parse((await admin('/reports', undefined, jsonOptions)).text).summary.netRevenue;
+      const product = (await db.query("INSERT INTO products(sku,name,category_id,base_price,current_price,stock) VALUES ('RETIRED','Sản phẩm ngừng bán',1,100000,100000,10) RETURNING id")).rows[0];
+      await db.query('INSERT INTO pricing_rules(product_id,low_stock,high_stock,increase_percent,discount_percent,min_price,max_price) VALUES ($1,8,20,10,10,50000,200000)', [product.id]);
+      const original = await transaction(pool, client => applyStockChange(client, product.id, 'SALE', 2, 2));
+      const reason = 'Khách trả\r\nĐã kiểm tra <script>bad</script>';
+      assert.equal((await staff('/requests/return', { csrf: staffCsrf, sale_id: String(original.id), quantity: '1', reason })).status, 303);
+      const beforeStopReturn = (await db.query("SELECT id FROM stock_requests WHERE product_id=$1 AND type='RETURN'", [product.id])).rows[0];
+      assert.equal((await staff('/requests/damage', { csrf: staffCsrf, product_id: String(product.id), quantity: '1', reason: 'Vỏ hộp vỡ\nĐã xác nhận' })).status, 303);
+      const beforeStopDamage = (await db.query("SELECT id FROM stock_requests WHERE product_id=$1 AND type='DAMAGE'", [product.id])).rows[0];
+      await db.query('UPDATE products SET is_active=false WHERE id=$1', [product.id]);
+      assert.equal((await staff('/requests/return', { csrf: staffCsrf, sale_id: String(original.id), quantity: '1', reason: 'Trả sau ngừng bán\nGiữ giá gốc' })).status, 303);
+      const afterStopReturn = (await db.query("SELECT id FROM stock_requests WHERE product_id=$1 AND type='RETURN' AND id<>$2", [product.id, beforeStopReturn.id])).rows[0];
+      for (const request of [beforeStopReturn, afterStopReturn, beforeStopDamage]) {
+        assert.equal((await approve(admin, adminCsrf, request.id, { review_note: 'Đã kiểm tra\r\nĐồng ý' })).status, 303);
+        const reviewed = (await db.query('SELECT status,review_note FROM stock_requests WHERE id=$1', [request.id])).rows[0];
+        assert.equal(reviewed.status, 'APPROVED');
+        assert.equal(reviewed.review_note, 'Đã kiểm tra\nĐồng ý');
+        assert.equal((await approve(admin, adminCsrf, request.id)).status, 409);
+      }
+      const finalProduct = (await db.query('SELECT stock,is_active,current_price FROM products WHERE id=$1', [product.id])).rows[0];
+      assert.equal(finalProduct.stock, 9);
+      assert.equal(finalProduct.is_active, false);
+      assert.equal(Number(finalProduct.current_price), 100000);
+      const returned = (await db.query("SELECT unit_price,note FROM stock_movements WHERE product_id=$1 AND type='RETURN' ORDER BY id", [product.id])).rows;
+      assert.equal(returned.length, 2);
+      assert.equal(Number(returned[0].unit_price), 100000);
+      assert.equal(returned[0].note, reason.replace(/\r\n/g, '\n'));
+      const html = await staff('/requests');
+      assert.ok(html.text.includes('&lt;script&gt;bad&lt;/script&gt;'));
+      const report = JSON.parse((await admin('/reports', undefined, jsonOptions)).text);
+      assert.equal(report.summary.netRevenue, previousRevenue);
+      const history = JSON.parse((await admin('/pricing/history?product_id=' + product.id, undefined, jsonOptions)).text);
+      assert.equal(history.length, 2);
+      assert.equal((await staff('/sales', { csrf: staffCsrf, product_id: String(product.id), quantity: '1' })).status, 404);
+      assert.equal((await admin('/inventory/receive', { csrf: adminCsrf, product_id: String(product.id), quantity: '1' })).status, 404);
+      assert.equal((await staff('/requests/damage', { csrf: staffCsrf, product_id: String(product.id), quantity: '1', reason: 'Không tạo mới cho hàng ngừng bán' })).status, 404);
+    });
+
+    await t.test('rejects empty, oversized and control-character reasons while keeping names single-line', async () => {
+      const before = await count('stock_requests');
+      for (const reason of [' \r\n ', 'x'.repeat(1001), 'Có\u0000lỗi', 'Có\u001blỗi', 'Có\u007flỗi']) {
+        assert.equal((await staff('/requests/damage', { csrf: staffCsrf, product_id: '1', quantity: '1', reason })).status, 400);
+      }
+      assert.equal(await count('stock_requests'), before);
+      assert.equal((await admin('/users', { csrf: adminCsrf, name: 'Tên\nkhông hợp lệ', email: 'broken@test.invalid', password: 'Testing@123', role: 'staff' })).status, 400);
+    });
   } finally {
     if (server) { server.closeAllConnections(); await new Promise(resolve => server.close(resolve)); }
     sessions.clear();

@@ -192,6 +192,21 @@ select:focus-visible { outline-offset: -3px; }
 .product-form { max-width: 800px; }
 .form-actions { display: flex; gap: var(--space-lg); align-items: center; }
 .management-note { margin-block: var(--space-lg); }
+.metrics-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr)); gap: var(--space-md); margin-bottom: var(--space-xl); }
+.metrics-grid > .card { min-width: 0; }
+.metric-label { margin: 0 0 var(--space-xs); }
+.metric-value { margin: 0; font-size: 26px; overflow-wrap: anywhere; }
+.metric-unit { font-size: 14px; font-weight: 400; }
+.metric-note { margin-top: var(--space-xs); overflow-wrap: anywhere; }
+.metric-accent { color: var(--color-accent); }
+.metric-error { color: var(--color-error); }
+.report-filter, .report-section { margin-bottom: var(--space-xl); }
+.report-filter .report-filter-actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-sm); }
+.report-section-title { padding-bottom: var(--space-sm); margin-bottom: var(--space-md); border-bottom: 1px solid var(--color-rule); }
+.report-section-title h2 { margin: 0; font-size: 20px; }
+.report-section-title p { margin: var(--space-2xs) 0 0; }
+.report-empty { padding: var(--space-lg); text-align: center; }
+.report-empty p { margin: 0; }
 .create-disclosure > summary { display: list-item; width: fit-content; min-height: 44px; padding: var(--space-sm) var(--space-md); border-radius: var(--radius-control); background: var(--color-accent); color: var(--color-accent-ink); font-size: 14px; font-weight: 600; }
 .create-disclosure > summary:hover { background: var(--color-accent-hover); }
 .create-disclosure[open] > summary { margin-bottom: var(--space-md); }
@@ -210,6 +225,7 @@ select:focus-visible { outline-offset: -3px; }
 .record-edit summary { min-height: 44px; padding: var(--space-sm) 0; color: var(--color-accent); font-size: 13px; }
 .record-edit label { margin-top: var(--space-sm); }
 .wrap-text { overflow-wrap: anywhere; }
+.multiline-text { white-space: pre-wrap; }
 .stock-note { display: block; width: 100%; min-height: 104px; padding: var(--space-sm); border: 1px solid var(--color-field); border-radius: var(--radius-control); background: var(--color-surface); color: var(--color-ink); font-size: 16px; resize: vertical; }
 .product-identity { display: flex; align-items: center; gap: var(--space-sm); }
 .product-identity > div { min-width: 0; }
