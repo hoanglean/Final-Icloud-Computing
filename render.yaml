@@ -1,0 +1,22 @@
+services:
+  - type: web
+    name: kho-viet
+    runtime: node
+    plan: free
+    region: singapore
+    buildCommand: npm ci
+    startCommand: npm start
+    envVars:
+      - key: NODE_VERSION
+        value: 22
+      - key: HOST
+        value: 0.0.0.0
+      - key: PORT
+        value: 10000
+      - key: SUPABASE_PROJECT_REF
+        sync: false
+      - key: DATABASE_URL
+        sync: false
+      - key: DATABASE_SSL_CA_FILE
+        value: database/certs/supabase-ca.crt
+
