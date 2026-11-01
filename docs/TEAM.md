@@ -2,7 +2,7 @@
 
 Tài liệu này chia phần việc cho bốn thành viên dựa trên mã nguồn hiện tại. Phân quyền áp dụng: nhân viên bán hàng; admin quản lý và xem lịch sử bán của nhân viên, không tự bán hàng. Thiết kế nghiệp vụ chi tiết nằm trong [PROJECT.md](PROJECT.md); hướng dẫn chạy và tài khoản đăng nhập nằm trong [README.md](../README.md).
 
-**Cập nhật ngày 01/11/2026**, theo mã nguồn của nhánh đang đọc. Hoàn thiện và kiểm thử trên nhánh tính năng chưa đồng nghĩa đã gộp vào `main`. PROJECT.md và tài liệu Word có thể còn mô tả tiến độ cũ; dùng README và tài liệu này để theo dõi phần đã có/còn thiếu.
+**Cập nhật ngày 01/11/2026:** PR #1, #2 và #3 đã được merge; phần chính của cả bốn thành viên đã có trên `main` và được kiểm thử chung. Mốc mã nguồn nghiệp vụ được kiểm tra là `1d9809d`. PROJECT.md, MEMBER_3.md và tài liệu Word có thể còn mô tả tiến độ cũ; dùng README và tài liệu này để theo dõi trạng thái hiện tại.
 
 ## 1 Nền tảng đã có
 
@@ -13,18 +13,18 @@ Tài liệu này chia phần việc cho bốn thành viên dựa trên mã ngu�
 - Thanh chức năng dùng chung theo vai trò tại `src/config/navigation.js` và `src/views/sidebar.js`.
 - Bảy bảng nghiệp vụ đã có: `users`, `categories`, `products`, `stock_movements`, `stock_requests`, `pricing_rules`, `price_history`. `schema_migrations` là bảng kỹ thuật, cần giữ lại cho công cụ migration.
 
-Đã có giao diện và xử lý cho tài khoản, danh mục, sản phẩm/ảnh, kho/bán hàng, yêu cầu trả hàng/hàng hỏng, quản lý quy tắc giá, lịch sử giá, tổng quan và báo cáo. Hàm tính lại giá dùng chung đã tích hợp vào đổi giá cơ sở, thay đổi tồn và duyệt yêu cầu. Bản ghép TV3/TV4 hiện đã kiểm thử cục bộ, còn chờ duyệt tích hợp. Phiên đăng nhập và giới hạn thử sai vẫn lưu trong RAM; chưa triển khai công khai lên Render.
+Đã có giao diện và xử lý cho tài khoản, danh mục, sản phẩm/ảnh, kho/bán hàng, yêu cầu trả hàng/hàng hỏng, quản lý quy tắc giá, lịch sử giá, tổng quan và báo cáo. Hàm tính lại giá dùng chung đã tích hợp vào đổi giá cơ sở, thay đổi tồn và duyệt yêu cầu. Bản tích hợp cả bốn phần đã chạy đạt 98 kiểm thử tự động và 56 lượt kiểm tra màn hình trên trình duyệt. Phiên đăng nhập và giới hạn thử sai vẫn lưu trong RAM; chưa triển khai công khai lên Render.
 
 ## 2 Phân công bốn thành viên
 
-Giữ nguyên phạm vi bốn thành viên; ưu tiên dùng lại các phần đã có thay vì viết lại. Các file ghi “cần thêm” chưa có trong mã nguồn hiện tại.
+Giữ nguyên phạm vi bốn thành viên để bảo trì phần mình và phối hợp các luồng dùng chung. Các module trong bảng dưới đều đã có trong mã nguồn; phần việc còn lại chủ yếu là kiểm chứng giao dịch đồng thời và triển khai.
 
 | Thành viên | Tiến độ và phần cần hoàn thiện | Vị trí mã nguồn |
 | --- | --- | --- |
 | 1 | Đã có các chức năng chính: tài khoản, sản phẩm/ảnh, danh mục, xác thực và phân quyền; phối hợp hoàn thiện bảo mật triển khai | `src/routes/auth.js`, `users.js`, `products.js`, `categories.js`; service, repository, view và kiểm thử tương ứng |
-| 2 | Đã có các chức năng chính: nhập kho, bán hàng, kiểm kê, lịch sử kho/bán và cảnh báo tồn; cần duyệt tích hợp và kiểm tra khóa trên nhiều kết nối PostgreSQL thật | `src/routes/inventory.js`, `sales.js`, `src/services/inventory.js`, `src/repositories/inventory.js`, `src/views/stock/index.js`, `tests/inventory-sales.test.js` |
+| 2 | Đã tích hợp và kiểm thử nhập kho, bán hàng, kiểm kê, lịch sử kho/bán và cảnh báo tồn; còn kiểm tra khóa trên nhiều kết nối PostgreSQL thật | `src/routes/inventory.js`, `sales.js`, `src/services/inventory.js`, `src/repositories/inventory.js`, `src/views/stock/index.js`, `tests/inventory-sales.test.js` |
 | 3 | Đã có quy tắc giá, lịch sử, tổng quan, báo cáo và cấu hình Render; còn kiểm chứng triển khai thực tế | `src/services/pricing.js`, `src/routes/pricing.js`, `dashboard.js`, repository và view tương ứng, `render.yaml` |
-| 4 | Đã hoàn thiện gửi/theo dõi yêu cầu trả hàng, hàng hỏng và luồng admin duyệt/từ chối | `src/routes/requests.js`, `src/services/requests.js`, `src/repositories/requests.js`, `src/views/requests/`, `tests/requests.test.js` |
+| 4 | Đã tích hợp và kiểm thử gửi/theo dõi, duyệt/từ chối, lý do nhiều dòng và trả hàng ngừng bán; còn kiểm tra duyệt đồng thời trên PostgreSQL thật | `src/routes/requests.js`, `src/services/requests.js`, `src/repositories/requests.js`, `src/views/requests/`, `tests/requests.test.js` |
 
 Mỗi thành viên làm cả giao diện, xử lý yêu cầu, truy vấn và kiểm thử cho phần mình. Giao diện đặt trong `src/views/` theo chức năng, kế thừa bố cục và CSS chung; không tạo một ứng dụng hoặc cơ chế đăng nhập riêng.
 
@@ -51,7 +51,7 @@ Người 1 đã cung cấp sản phẩm và tài khoản cho các phần khác t
 Cần làm tiếp:
 
 - [ ] Phối hợp người 3 chuyển phiên đăng nhập và giới hạn thử sai khỏi RAM, cấu hình HTTPS/cookie Secure và host khi triển khai.
-- [ ] Kiểm tra lại luồng tài khoản, sản phẩm và ảnh sau khi các chức năng còn lại tích hợp hoặc cấu hình triển khai thay đổi.
+- [x] Đã kiểm tra tài khoản, sản phẩm và ảnh sau khi tích hợp đủ bốn thành viên; tiếp tục chạy lại khi thay đổi code hoặc môi trường triển khai.
 
 ### Người 2 đã làm được gì và còn thiếu gì
 
@@ -59,18 +59,18 @@ Cần làm tiếp:
 
 `applyStockChange` khóa sản phẩm, ghi giao dịch với đơn giá gốc, cập nhật tồn và tính lại giá trong cùng transaction. IN, SALE, RETURN, ADJUST_IN, ADJUST_OUT và DAMAGE đã được dùng bởi luồng kho/bán và duyệt yêu cầu. Một lần bán hiện ghi một sản phẩm; lịch sử tối đa 100 dòng, chưa có lọc thời gian/phân trang.
 
-- [ ] Duyệt và tích hợp nhánh tính năng vào nhánh chính sau khi kiểm thử; không coi code chỉ có trên nhánh tính năng là đã có trên `main`.
+- [x] Đã tích hợp phần kho/bán hàng vào `main` và kiểm thử chung với các phần còn lại.
 - [ ] Kiểm tra khóa và bán đồng thời bằng nhiều kết nối PostgreSQL thật. Kiểm thử PGlite hiện dùng một kết nối, chưa chứng minh hành vi này trên Supabase.
-- [ ] Phối hợp người 4 tích hợp duyệt trả hàng/hàng hỏng; giữ một luồng cập nhật tồn và transaction thống nhất.
+- [x] Đã phối hợp người 4 tích hợp duyệt trả hàng/hàng hỏng bằng dịch vụ kho dùng chung, cùng transaction cập nhật giá và lịch sử.
 
-### Người 3 và người 4 làm tiếp
+### Người 3 và người 4 đã có gì, còn làm gì
 
-- **Người 3:** đã có quản lý quy tắc, tính lại giá từ giao diện, lịch sử giá, tổng quan và báo cáo. Doanh thu tính SALE trừ RETURN, loại trừ hàng hỏng/kiểm kê. Bản ghép đã kiểm thử số liệu sau duyệt yêu cầu của người 4; còn hoàn thiện và kiểm chứng triển khai Render.
-- **Người 4:** đã làm gửi/theo dõi yêu cầu, danh sách admin duyệt/từ chối, kiểm tra quyền và CSRF. Nhân viên chỉ xem yêu cầu mình gửi và chỉ trả hàng từ lần bán của mình; yêu cầu PENDING được tính vào hạn mức trả để tránh tạo nhiều yêu cầu vượt số bán. Duyệt khóa yêu cầu và dùng `applyStockChange` cùng transaction; từ chối không đổi tồn. Kiểm thử HTTP/PostgreSQL bao gồm quyền, hạn mức, duyệt một lần và rollback.
+- **Người 3:** đã có quản lý quy tắc, tính lại giá từ giao diện, lịch sử giá, tổng quan và báo cáo. Doanh thu tính SALE trừ RETURN, loại trừ hàng hỏng/kiểm kê. Đã đối chiếu doanh thu trên tổng quan/báo cáo sau bán, trả hàng và hàng hỏng. Còn phối hợp người 1 hoàn thiện phiên đăng nhập/HTTPS và kiểm chứng triển khai Render thực tế.
+- **Người 4:** đã làm gửi/theo dõi yêu cầu, danh sách admin duyệt/từ chối, kiểm tra quyền và CSRF. Nhân viên chỉ xem yêu cầu mình gửi và chỉ trả hàng từ lần bán của mình; yêu cầu PENDING được tính vào hạn mức trả để tránh tạo nhiều yêu cầu vượt số bán. Duyệt khóa yêu cầu và dùng `applyStockChange` cùng transaction; từ chối không đổi tồn. Đã kiểm thử quyền, hạn mức, duyệt một lần, rollback, lý do nhiều dòng và xử lý yêu cầu khi sản phẩm ngừng bán. Còn phối hợp người 2 kiểm tra duyệt trùng/tạo và duyệt trả đồng thời bằng nhiều kết nối PostgreSQL thật.
 
 ## 3 Quyền và phạm vi dữ liệu
 
-Bảng dưới áp dụng cho các màn hình đã có trong bản ghép hiện tại, bao gồm yêu cầu, định giá và báo cáo.
+Bảng dưới áp dụng cho các màn hình đã có trên `main`, bao gồm yêu cầu, định giá và báo cáo.
 
 | Chức năng hoặc đường dẫn | Admin | Nhân viên |
 | --- | --- | --- |
@@ -93,8 +93,8 @@ Quản lý tài khoản đã chặn admin tự khóa mình và hạ quyền admi
 ## 4 Cách ghép chức năng vào ứng dụng
 
 1. Đặt xử lý request trong `src/routes/`, nghiệp vụ trong `src/services/` và truy vấn trong `src/repositories/`. Dùng tham số `$1`, `$2` của `pg` cho dữ liệu người dùng.
-2. Đăng ký route tại `src/app.js` theo cả phương thức và đường dẫn. Các route tài khoản, danh mục, sản phẩm, kho và bán hàng đã chạy trước `authRoutes` và `pageRoutes`; route mới cần được ghép tương tự.
-3. `src/routes/pages.js` vẫn trả trang chờ cho các mục chưa triển khai. Khi làm chức năng thật, xử lý trước nhánh trang chờ; không để trang chờ che mất chức năng đã viết.
+2. Đăng ký route tại `src/app.js` theo cả phương thức và đường dẫn. Các route tài khoản, danh mục, sản phẩm, kho, bán hàng, yêu cầu, định giá và tổng quan/báo cáo đã chạy trước `authRoutes` và `pageRoutes`; route mới cần được ghép tương tự.
+3. Các mục nghiệp vụ trên menu hiện đã có route thật. `src/routes/pages.js` xử lý các trang dùng chung và điều hướng dự phòng; chức năng mới phải được đăng ký trước nó để không rơi vào trang chờ hoặc 404.
 4. Dùng pool đã tạo trong `createApp` và có sẵn trong context, không tạo pool ở từng request. Dùng `src/utils/transaction.js` khi cần transaction.
 5. Route thay đổi dữ liệu phải tự kiểm tra đăng nhập, quyền, `session.csrf` và dữ liệu đầu vào. Route mới không tự được bảo vệ CSRF chỉ nhờ nằm trong ứng dụng.
 6. Khi trả trang, dùng `send` và truyền đường dẫn hiện tại vào tham số cuối để thanh bên đánh dấu đúng mục. Escape nội dung người dùng trước khi chèn vào HTML.
@@ -109,11 +109,11 @@ Các dịch vụ cần dùng chung và trạng thái hiện tại:
 - Đã có `recalculatePrice(client, productId, changedBy, reason)` trong `src/services/pricing.js`, nhận cùng client transaction. Tính từ `base_price`, chặn min/max, làm tròn đến đồng và chỉ ghi `price_history` khi giá đổi. Người 3 dùng lại hàm này cho màn hình quản lý giá.
 - Người 4 đã thêm luồng trong `src/services/requests.js`: khóa và kiểm tra PENDING, gọi dịch vụ kho bằng tài khoản admin duyệt, truyền giao dịch bán gốc cho RETURN; cập nhật trạng thái và liên kết giao dịch trong cùng transaction. Người gửi yêu cầu lấy từ phiên đăng nhập và được lưu riêng, không nhận từ dữ liệu trình duyệt.
 
-Mỗi thao tác dùng một client với BEGIN, COMMIT hoặc ROLLBACK và luôn release. Các dịch vụ phối hợp trong một thao tác phải dùng cùng client; không tự COMMIT một phần rồi mới cập nhật phần còn lại. Thống nhất thứ tự khóa giữa các luồng cùng sửa tồn hoặc giá.
+Thao tác phối hợp nhiều thay đổi dùng một client với BEGIN, COMMIT hoặc ROLLBACK và luôn release. Các dịch vụ trong thao tác đó phải dùng cùng client; không tự COMMIT một phần rồi mới cập nhật phần còn lại. Giữ thống nhất thứ tự khóa giữa các luồng cùng sửa tồn hoặc giá.
 
 SALE lưu đơn giá trước khi trừ tồn; giá tính lại dùng cho lần bán tiếp theo. RETURN dùng giá bán gốc và không được trả vượt số lượng đã bán. Doanh thu là SALE trừ RETURN; DAMAGE và điều chỉnh kiểm kê không tính vào doanh thu. Yêu cầu PENDING hoặc REJECTED không làm đổi tồn, giá hay doanh thu.
 
-Database đã có các ràng buộc và trigger kiểm tra người tạo giao dịch, trả hàng, trạng thái duyệt và lịch sử kho không sửa/xóa. Những kiểm tra này không tự cập nhật `products.stock` hoặc tính giá. Dịch vụ kho đã làm phần cập nhật tồn/giá; luồng yêu cầu còn phải ghép trạng thái duyệt và giao dịch vào cùng transaction.
+Database đã có các ràng buộc và trigger kiểm tra người tạo giao dịch, trả hàng, trạng thái duyệt và lịch sử kho không sửa/xóa. Những kiểm tra này không tự cập nhật `products.stock` hoặc tính giá. Luồng yêu cầu đã ghép trạng thái duyệt, giao dịch, tồn và giá vào cùng transaction; tiếp tục giữ nguyên tính nguyên tử này khi thay đổi code.
 
 ## 6 Cơ sở dữ liệu và phối hợp thay đổi
 
@@ -124,9 +124,11 @@ Database đã có các ràng buộc và trigger kiểm tra người tạo giao d
 - Các bảng bật RLS và chặn truy cập trực tiếp của vai trò trình duyệt. Kết nối PostgreSQL của máy chủ vẫn cần kiểm tra quyền và phạm vi dữ liệu tại ứng dụng; RLS hiện không tự phân biệt admin/nhân viên của Kho Việt.
 - Kiểm thử và dữ liệu thử dùng PostgreSQL qua PGlite, không ghi giao dịch giả vào Supabase đang dùng chung. Khi cần dữ liệu demo trên Supabase, nhóm thống nhất riêng dữ liệu và người thực hiện.
 
-## 7 Kiểm thử và thứ tự tích hợp
+## 7 Kết quả kiểm thử và phần cần kiểm chứng tiếp
 
-Ngày 01/11/2026, `npm test` đạt **98/98 kiểm thử** sau khi ghép TV3 và TV4. Các bộ auth, navigation, database, categories, management, product-images, inventory-sales, pricing, reports và requests bao phủ quyền, dữ liệu, transaction và tích hợp doanh thu/lịch sử giá sau duyệt. Đã kiểm tra thêm trên trình duyệt 6 màn hình yêu cầu, tổng quan và báo cáo ở 1440 px và 375 px bằng dữ liệu riêng; vẫn cần kiểm tra khóa bằng nhiều kết nối PostgreSQL thật.
+Ngày 01/11/2026, `npm test` đạt **98/98 kiểm thử** trên `main` đã có đủ bốn phần. Các bộ auth, navigation, database, categories, management, product-images, inventory-sales, pricing, reports và requests bao phủ quyền, dữ liệu, transaction và tích hợp doanh thu/lịch sử giá sau duyệt.
+
+Kiểm tra trình duyệt thực hiện riêng, không thuộc lệnh `npm test`: **56 lượt kiểm tra**, gồm 28 màn hình theo quyền admin/nhân viên ở 1440 px và 375 px. Đã chạy luồng tạo/đổi quyền/khóa tài khoản, danh mục, sản phẩm/ảnh, kho/bán, giá, yêu cầu và đối chiếu báo cáo; đổi mật khẩu và truy cập trái quyền cũng được kiểm tra. Dùng dữ liệu thử riêng; kết nối Supabase thật chỉ được kiểm tra đọc.
 
 Lý do và ghi chú nghiệp vụ hỗ trợ nhiều dòng, tối đa 1000 ký tự; tên/email vẫn chỉ một dòng. Có thể duyệt trả hàng từ lần bán cũ và yêu cầu hàng hỏng đã gửi trước khi sản phẩm ngừng bán, giữ nguyên trạng thái ngừng bán. Tạo yêu cầu trả khóa sản phẩm trước giao dịch bán, cùng thứ tự với dịch vụ kho để tránh đảo thứ tự khóa.
 
@@ -137,6 +139,10 @@ Lý do và ghi chú nghiệp vụ hỗ trợ nhiều dòng, tối đa 1000 ký t
 | 3 | Giá ở đúng ngưỡng thấp/cao; min/max; quy tắc tắt; không tăng giảm cộng dồn; lịch sử chỉ ghi khi giá đổi; doanh thu trừ hoàn trả |
 | 4 | Đã kiểm thử gửi/từ chối không đổi tồn; chỉ admin duyệt; không duyệt hai lần; trả không vượt số đã bán; hàng hỏng không vượt tồn; lỗi thì rollback toàn bộ |
 
-Phần chính của cả bốn thành viên đã được ghép và kiểm thử cục bộ. Thứ tự tiếp theo: duyệt tích hợp bản này → kiểm tra nhiều kết nối PostgreSQL thật → hoàn thiện bảo mật và triển khai.
+Phần chính của cả bốn thành viên đã nằm trên `main`. Việc còn lại:
 
-Mỗi người làm nhánh Git theo tính năng và chạy `npm test` trước khi gộp. Khi cùng sửa `src/app.js`, navigation, CSS hoặc migration, thống nhất người ghép để tránh ghi đè. Trước khi đánh dấu hoàn thành, kiểm tra cả vai trò admin và nhân viên, đường dẫn trực tiếp, POST trái quyền và luồng lỗi; không chỉ kiểm tra menu hiển thị.
+- **Người 2 và 4, phối hợp người 3:** kiểm tra bằng nhiều kết nối trên PostgreSQL thử riêng. Khi còn 1 món mà hai nhân viên cùng bán, chỉ một giao dịch được ghi; hai admin duyệt cùng yêu cầu chỉ xử lý một lần; tạo yêu cầu trả đồng thời với duyệt không vượt số bán hoặc làm lệch tồn/giá. PGlite hiện dùng một kết nối và pool thử tuần tự hóa transaction, nên chưa xác nhận được các hành vi khóa này trên PostgreSQL thật.
+- **Người 1 và 3:** hoàn thiện session store và giới hạn đăng nhập dùng chung, HTTPS/cookie Secure, cấu hình môi trường và host; kiểm tra đăng nhập, tải ảnh và các transaction sau khi triển khai.
+- **Người 3, cả nhóm xác nhận:** triển khai và chạy thử trên Render. Hiện mới có `render.yaml`; chưa có kết quả triển khai thực tế.
+
+Mỗi người làm nhánh Git theo tính năng. Trước khi gộp, cập nhật `main` mới vào nhánh đang làm, xử lý xung đột và chạy lại `npm test` cùng các luồng liên quan. PR chạy tốt trên bản gốc cũ chưa thay thế kiểm thử bản tích hợp. Khi cùng sửa `src/app.js`, giữ đủ import, repository, context và route của các thành viên; không chọn toàn bộ một phía rồi làm mất chức năng phía còn lại. Chỉ merge PR sau khi kiểm tra cả admin/nhân viên, đường dẫn trực tiếp, POST trái quyền và luồng lỗi.

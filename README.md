@@ -1,8 +1,8 @@
 # Kho Việt — Quản lý kho và định giá động
 
-Ứng dụng quản lý cửa hàng dùng Node.js 22 trở lên, giao diện HTML/CSS và PostgreSQL trên Supabase. Bản tính năng hiện tại đã ghép phần chính của cả bốn thành viên: tài khoản, danh mục, sản phẩm/ảnh, kho/bán hàng, định giá, tổng quan/báo cáo và yêu cầu trả hàng/hàng hỏng.
+Ứng dụng quản lý cửa hàng dùng Node.js 22 trở lên, giao diện HTML/CSS và PostgreSQL trên Supabase. Phần chính của cả bốn thành viên đã được tích hợp vào `main`: tài khoản, danh mục, sản phẩm/ảnh, kho/bán hàng, định giá, tổng quan/báo cáo và yêu cầu trả hàng/hàng hỏng.
 
-Thông tin bên dưới phản ánh mã nguồn trên nhánh đang đọc tại ngày **01/11/2026**. Bản ghép và sửa lỗi cần được duyệt trước khi đưa lên `main`; triển khai công khai vẫn còn việc. Tiến độ từng thành viên nằm trong [docs/TEAM.md](docs/TEAM.md).
+Cập nhật ngày **01/11/2026**, sau khi PR #1, #2 và #3 đã được merge vào `main`. Bản tích hợp đã qua kiểm thử tự động và trình duyệt; chưa triển khai công khai lên Render và chưa kiểm chứng giao dịch đồng thời bằng nhiều kết nối PostgreSQL thật. Tiến độ và phần việc còn lại của nhóm nằm trong [docs/TEAM.md](docs/TEAM.md).
 
 ## Chức năng và tiến độ
 
@@ -42,7 +42,7 @@ npm run db:migrate
 npm start
 ```
 
-Mở http://localhost:3000. Dùng `npm run dev` thay `npm start` nếu muốn tự khởi động lại khi sửa mã. Sau khi lấy phiên bản mới từ Git, chạy lại `npm ci` và `npm run db:migrate` trước khi mở ứng dụng.
+Mở [http://localhost:3000](http://localhost:3000). Dùng `npm run dev` thay `npm start` nếu muốn tự khởi động lại khi sửa mã. Sau khi lấy phiên bản mới từ Git, chạy lại `npm ci` và `npm run db:migrate` trước khi mở ứng dụng.
 
 Không có `start.bat` trong dự án. Server hỗ trợ `HOST` và `PORT`, mặc định `0.0.0.0:3000`; dùng `HOST=127.0.0.1` khi chỉ muốn chạy trên máy mình. Đã có `render.yaml`, chưa triển khai lên Render.
 
@@ -73,7 +73,7 @@ Ràng buộc SQL kiểm tra tồn không âm, số lượng dương, giá hữu 
 - Khi đổi giá cơ sở, `src/services/pricing.js` tính từ giá cơ sở theo quy tắc đang bật, giới hạn min/max và làm tròn đến đồng. Chưa có hoặc đã tắt quy tắc thì dùng giá cơ sở. Chỉ ghi `price_history` khi giá bán đổi; lỗi thì hoàn tác cả lần lưu sản phẩm.
 - Tên sản phẩm, danh mục, giá và các thao tác quản lý chỉ được thay đổi bởi admin. Không xóa cứng sản phẩm hoặc danh mục qua giao diện; dùng ngừng kinh doanh/ngừng sử dụng để giữ liên kết dữ liệu.
 
-File `database/seeds/001_demo_catalog.sql` chứa bộ dữ liệu minh họa đã thêm lên Supabase:
+File `database/seeds/001_demo_catalog.sql` cung cấp 20 sản phẩm thuộc 4 danh mục. Đây là bộ dữ liệu mẫu; số lượng và tồn thực tế trên Supabase thay đổi theo thao tác của nhóm:
 
 | Danh mục | Số sản phẩm |
 | --- | --- |
@@ -102,6 +102,15 @@ Admin vào **Sản phẩm → Thêm sản phẩm/Sửa sản phẩm → Ảnh s�
 - Lịch sử kho và lịch sử bán hiển thị tối đa 100 giao dịch mới nhất; chưa có bộ lọc thời gian hoặc phân trang. Cảnh báo tồn thấp dùng ngưỡng `low_stock` của quy tắc sản phẩm, mặc định 10 khi chưa có quy tắc; trạng thái bật/tắt quy tắc giá hiện không thay đổi ngưỡng cảnh báo này.
 - Nhân viên và admin gửi yêu cầu tại **Yêu cầu trả hàng/Báo hàng hỏng**; admin xử lý tại **Duyệt yêu cầu**. Gửi hoặc từ chối chưa đổi tồn; chỉ duyệt mới tạo giao dịch kho. Lý do hỗ trợ nhiều dòng, tối đa 1000 ký tự.
 - Giao dịch bán cũ vẫn được trả khi sản phẩm đã ngừng kinh doanh. Yêu cầu hàng hỏng đã gửi trước khi ngừng bán cũng duyệt được nếu còn đủ tồn. Xử lý yêu cầu không tự mở bán lại sản phẩm; tạo mới yêu cầu hàng hỏng vẫn chỉ chọn sản phẩm đang kinh doanh.
+
+## Định giá và báo cáo
+
+- Admin vào **Quy tắc định giá** để thêm/sửa ngưỡng tồn thấp, tồn cao, tỷ lệ tăng/giảm, giá sàn/trần; có thể bật/tắt quy tắc hoặc tính lại giá thủ công.
+- Khi bật quy tắc: tồn nhỏ hơn hoặc bằng ngưỡng thấp thì tăng giá; tồn lớn hơn hoặc bằng ngưỡng cao thì giảm giá; ở giữa thì dùng giá cơ sở. Luôn tính từ `base_price`, giới hạn trong giá sàn/trần rồi làm tròn đến đồng. Không có hoặc tắt quy tắc thì dùng giá cơ sở.
+- **Lịch sử giá** lọc theo sản phẩm và hiển thị tối đa 100 lần thay đổi gần nhất. Tính lại mà giá không đổi thì không tạo thêm lịch sử.
+- **Tổng quan** thống kê sản phẩm đang kinh doanh, tổng tồn, giá trị tồn theo giá cơ sở, cảnh báo tồn và doanh thu thuần hôm nay. Giá trị tồn theo giá cơ sở không phải lợi nhuận hoặc giá vốn nhập hàng thực tế.
+- **Báo cáo, thống kê** tính doanh thu thuần bằng tiền SALE trừ tiền RETURN đã ghi nhận. Yêu cầu chưa duyệt, hàng hỏng và điều chỉnh kiểm kê không tính vào doanh thu. Dữ liệu bán/hoàn trả cũ vẫn được giữ khi sản phẩm ngừng kinh doanh.
+- Chọn toàn bộ, hôm nay, 7 ngày, 30 ngày hoặc khoảng ngày tùy chọn rồi bấm **Xem báo cáo**. Khoảng 7/30 ngày gồm ngày hiện tại, theo giờ Việt Nam; ngày không hợp lệ hoặc từ ngày lớn hơn đến ngày sẽ được báo lỗi. Báo cáo có tổng hợp theo danh mục và thống kê biến động giá.
 
 ## Phân quyền
 
@@ -137,7 +146,7 @@ Final-Icloud/
 │   │   └── navigation.js                 # Danh sách chức năng và quyền trên menu
 │   ├── routes/
 │   │   ├── auth.js                       # Đăng nhập, đăng xuất, đổi mật khẩu
-│   │   ├── pages.js                      # Trang chủ, kiểm tra quyền, trang chờ nghiệp vụ
+│   │   ├── pages.js                      # Trang đăng nhập, mật khẩu và điều hướng dự phòng
 │   │   ├── categories.js                 # Thêm, sửa, ngừng sử dụng danh mục
 │   │   ├── products.js                   # Tra cứu, quản lý sản phẩm và trả ảnh
 │   │   ├── inventory.js                  # Nhập kho, kiểm kê, lịch sử và cảnh báo tồn
@@ -157,7 +166,7 @@ Final-Icloud/
 │   │   ├── product-images.js             # Xác thực, thu nhỏ và chuẩn hóa ảnh WebP
 │   │   ├── inventory.js                  # Khóa sản phẩm, ghi giao dịch, cập nhật tồn và giá
 │   │   ├── requests.js                   # Hạn mức trả và duyệt yêu cầu cùng transaction
-│   │   └── pricing.js                    # Tính lại giá, ghi lịch sử bằng client transaction
+│   │   └── pricing.js                    # Quản lý quy tắc, tính lại giá và ghi lịch sử
 │   ├── repositories/
 │   │   ├── users-postgres.js             # Truy vấn tài khoản và phiên bản đăng nhập
 │   │   ├── categories.js                 # Truy vấn danh mục
@@ -234,7 +243,7 @@ Final-Icloud/
 └── README.md                             # Hướng dẫn chạy và tổng quan dự án
 ```
 
-Sơ đồ phản ánh các file trong bản đang phát triển; các file `.gitkeep` giữ thư mục trống được lược bỏ. Dự án không còn lưu tài khoản trong `data/users.json`; tài khoản, sản phẩm, ảnh và dữ liệu nghiệp vụ nằm trên Supabase. README và TEAM đã cập nhật cùng phiên bản; `docs/PROJECT.md`, tài liệu Word và `report_inventory.md` có thể còn mô tả cũ, không dùng để kết luận tiến độ hiện tại.
+Sơ đồ phản ánh các file trong bản đang phát triển; các file `.gitkeep` giữ thư mục trống được lược bỏ. Dự án không còn lưu tài khoản trong `data/users.json`; tài khoản, sản phẩm, ảnh và dữ liệu nghiệp vụ nằm trên Supabase. README và TEAM đã cập nhật cùng phiên bản; `docs/PROJECT.md`, `docs/MEMBER_3.md`, tài liệu Word và `report_inventory.md` có thể còn mô tả cũ, không dùng để kết luận tiến độ hiện tại.
 
 ## Kiểm thử và giới hạn
 
@@ -242,7 +251,7 @@ Sơ đồ phản ánh các file trong bản đang phát triển; các file `.git
 npm test
 ```
 
-Lần kiểm tra ngày 01/11/2026: **98 kiểm thử đạt, 0 lỗi**. Bộ kiểm thử dùng PostgreSQL qua PGlite với dữ liệu riêng, áp dụng đầy đủ migration và không thay đổi database Supabase thật. Nội dung gồm:
+Lần kiểm tra ngày 01/11/2026 trên `main` đã merge đủ bốn phần (mã nguồn nghiệp vụ tại commit `1d9809d`): **98 kiểm thử đạt, 0 lỗi**. Bộ kiểm thử dùng PostgreSQL qua PGlite với dữ liệu riêng, áp dụng đầy đủ migration và không thay đổi database Supabase thật. Nội dung gồm:
 
 - Đăng nhập, đổi mật khẩu, CSRF, phân quyền và hết hiệu lực phiên.
 - Tạo/đổi quyền/khóa tài khoản, email trùng và bảo vệ admin cuối cùng.
@@ -255,10 +264,10 @@ Lần kiểm tra ngày 01/11/2026: **98 kiểm thử đạt, 0 lỗi**. Bộ ki�
 - Trả hàng ngừng kinh doanh, duyệt hàng hỏng đã gửi trước khi ngừng bán, lý do nhiều dòng và doanh thu/lịch sử giá sau xử lý yêu cầu.
 - Quản lý quy tắc giá, báo cáo theo ngày Việt Nam, ngày sai/đảo ngược, giao dịch sát cuối ngày và tổng tiền lớn.
 
-Đã kiểm tra trên trình duyệt luồng nhập kho → bán hàng → kiểm kê và 7 màn hình kho/bán hàng ở chiều rộng 1440 px và 375 px bằng dữ liệu thử riêng.
+Kiểm tra trình duyệt được thực hiện riêng, không thuộc lệnh `npm test`: **56 lượt kiểm tra**, gồm 28 màn hình theo quyền admin/nhân viên ở hai chiều rộng 1440 px và 375 px. Các màn hình được kiểm tra không có trang chờ nghiệp vụ, không tràn ngang và không phát sinh lỗi chính sách bảo mật.
 
-Bản ghép TV3/TV4 đã kiểm tra thêm 6 màn hình yêu cầu, tổng quan và báo cáo ở 1440 px và 375 px; gửi/duyệt/từ chối, lý do nhiều dòng và trả sản phẩm ngừng bán đều chạy được.
+Đã chạy luồng tạo tài khoản → đổi quyền/khóa/mở khóa → danh mục/sản phẩm/ảnh → quy tắc giá → nhập kho/bán hàng/kiểm kê → gửi/duyệt/từ chối yêu cầu → đối chiếu doanh thu và lịch sử giá. Đổi mật khẩu, hủy phiên cũ, chặn truy cập trái quyền và trả sản phẩm ngừng bán cũng đã được kiểm tra. Các thao tác tạo/sửa dữ liệu này dùng database thử riêng.
 
-Kiểm tra kết nối thật bằng `npm run db:check`. PGlite dùng một kết nối; kiểm thử hiện tại chưa chứng minh hành vi khóa giữa nhiều kết nối PostgreSQL thật. Cần kiểm tra thêm trước khi triển khai.
+Đã kiểm tra kết nối đọc Supabase bằng `npm run db:check`. PGlite dùng một kết nối; các ca gửi đồng thời trong bộ test được tuần tự hóa qua pool thử, chưa chứng minh hành vi khóa giữa nhiều kết nối PostgreSQL thật. Cần kiểm tra riêng trường hợp hai nhân viên cùng bán món cuối cùng, hai admin cùng duyệt một yêu cầu và tạo yêu cầu trả đồng thời với duyệt trả.
 
-Phiên đăng nhập và giới hạn thử sai vẫn nằm trong RAM, mất khi khởi động lại và chưa dùng chung giữa các tiến trình. Trước khi triển khai công khai cần session store bền vững, HTTPS, cookie Secure và cấu hình host triển khai. Phần tiếp theo là duyệt tích hợp bản ghép, kiểm tra nhiều kết nối PostgreSQL thật và hoàn thiện triển khai.
+Phiên đăng nhập và giới hạn thử sai vẫn nằm trong RAM, mất khi khởi động lại và chưa dùng chung giữa các tiến trình. Trước khi triển khai công khai cần session store bền vững, HTTPS, cookie Secure và cấu hình host triển khai. Phần tiếp theo là kiểm tra giao dịch bằng nhiều kết nối PostgreSQL thật, hoàn thiện bảo mật triển khai và chạy thử trên Render.
