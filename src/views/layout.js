@@ -5,7 +5,8 @@ const { sidebar } = require('./sidebar');
 function layout(title, content, user, session, currentPath = '') {
   const role = user?.role === 'admin' ? 'Quản trị viên' : 'Nhân viên';
   const account = user ? `<header class="app-header">
-    <a class="brand" href="${roleHome(user.role)}" aria-label="Kho Việt, về trang chủ"><span class="logo">K</span><span>Kho Việt</span></a>
+    <a class="brand" href="${roleHome(user.role)}" aria-label="Kho Việt, về trang chủ"><span class="logo">K</span><span>Kho Việt<span class="brand-caption">QUẢN LÝ CỬA HÀNG</span></span></a>
+    <div class="header-location"><span>${user.role === 'admin' ? 'Quản trị' : 'Không gian làm việc'}</span><span aria-hidden="true">/</span><strong>${escape(title)}</strong></div>
     <div class="header-account">
       <div class="account-name"><span class="account-avatar" aria-hidden="true">${escape([...user.name][0] || 'K')}</span><div><strong>${escape(user.name)}</strong><span>${role}</span></div></div>
       <nav aria-label="Tài khoản"><a href="/change-password">Đổi mật khẩu</a><form method="post" action="/logout"><input type="hidden" name="csrf" value="${session.csrf}"><button class="nav-button" type="submit">Đăng xuất</button></form></nav>

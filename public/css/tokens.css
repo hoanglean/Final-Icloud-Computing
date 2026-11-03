@@ -1,19 +1,19 @@
 :root {
   --font-body: "Segoe UI", Arial, sans-serif;
   --font-display: var(--font-body);
-  --color-paper: #f4f6f0;
+  --color-paper: #f5f7f8;
   --color-paper-2: #edf1e7;
   --color-paper-3: #e1e7db;
   --color-surface: #ffffff;
-  --color-ink: #173d33;
-  --color-ink-2: #344d40;
-  --color-muted: #536451;
-  --color-rule: #d4ddcd;
-  --color-field: #7d8d78;
-  --color-accent: #214e3d;
-  --color-accent-hover: #173f30;
+  --color-ink: #203c31;
+  --color-ink-2: #42594d;
+  --color-muted: #67786e;
+  --color-rule: #e2e9e4;
+  --color-field: #cbd7cf;
+  --color-accent: #21684e;
+  --color-accent-hover: #17533d;
   --color-accent-ink: #f7faef;
-  --color-accent-soft: #e8f0d8;
+  --color-accent-soft: #eaf4ee;
   --color-lime: #d1eb8c;
   --color-sidebar: #173f34;
   --color-sidebar-ink: #e8f0e1;
