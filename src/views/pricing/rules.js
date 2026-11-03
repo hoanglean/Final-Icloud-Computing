@@ -79,7 +79,7 @@ function pricingRulesPage(products, categoriesOrSession, sessionOrOptions, optio
     ${error ? `<div class="alert error" role="alert">${escape(error)}</div>` : ''}
     ${notice ? `<div class="alert success" role="status">${escape(notice)}</div>` : ''}
 
-    <form class="filter-form card" method="get" action="/pricing" style="margin-bottom: var(--space-xl);">
+    <form class="filter-form card pricing-filter" method="get" action="/pricing">
       <div>
         <label for="pricing-search">Tìm theo tên hoặc ID</label>
         <input id="pricing-search" name="q" type="search" maxlength="200" value="${escape(q)}" placeholder="Nhập tên hoặc ID...">

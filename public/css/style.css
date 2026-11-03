@@ -215,7 +215,7 @@ select:focus-visible { outline-offset: -3px; }
 .metric-note { margin-top: var(--space-xs); overflow-wrap: anywhere; }
 .metric-accent { color: var(--color-accent); }
 .metric-error { color: var(--color-error); }
-.report-filter, .report-section { margin-bottom: var(--space-xl); }
+.report-filter, .pricing-filter, .report-section { margin-bottom: var(--space-xl); }
 .report-filter .report-filter-actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-sm); }
 .report-section-title { padding-bottom: var(--space-sm); margin-bottom: var(--space-md); border-bottom: 1px solid var(--color-rule); }
 .report-section-title h2 { margin: 0; font-size: 20px; }
