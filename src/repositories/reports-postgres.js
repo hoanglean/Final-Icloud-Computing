@@ -24,12 +24,31 @@ function createReportsRepository(pool) {
         WHERE (created_at AT TIME ZONE 'Asia/Saigon')::date = (now() AT TIME ZONE 'Asia/Saigon')::date
           AND type IN ('SALE', 'RETURN')
       ),
+      movement_totals AS (
+        SELECT
+          COALESCE(sum(CASE WHEN type = 'IN' THEN quantity ELSE 0 END), 0)::bigint AS total_received,
+          COALESCE(sum(CASE WHEN type = 'SALE' THEN quantity ELSE 0 END), 0)::bigint AS total_sold,
+          COALESCE(sum(CASE WHEN type = 'RETURN' THEN quantity ELSE 0 END), 0)::bigint AS total_returned,
+          COALESCE(sum(CASE WHEN type = 'SALE' THEN quantity * unit_price ELSE 0 END), 0)::numeric AS gross_revenue,
+          COALESCE(sum(CASE WHEN type = 'RETURN' THEN quantity * unit_price ELSE 0 END), 0)::numeric AS returns_value,
+          count(*) FILTER (WHERE type = 'IN')::integer AS receipt_count,
+          count(*) FILTER (WHERE type = 'SALE')::integer AS sale_count
+        FROM public.stock_movements WHERE type IN ('IN', 'SALE', 'RETURN')
+      ),
       recent_price_changes AS (
         SELECT count(*)::integer AS price_change_count
         FROM public.price_history
         WHERE (created_at AT TIME ZONE 'Asia/Saigon')::date = (now() AT TIME ZONE 'Asia/Saigon')::date
       )
       SELECT
+        m.total_received AS "totalReceived",
+        m.total_sold AS "totalSold",
+        m.total_returned AS "totalReturned",
+        m.gross_revenue AS "grossRevenue",
+        m.returns_value AS "returnsValue",
+        (m.gross_revenue - m.returns_value)::numeric AS "netRevenue",
+        m.receipt_count AS "receiptCount",
+        m.sale_count AS "saleCount",
         p.total_products AS "totalProducts",
         p.total_stock AS "totalStock",
         p.total_valuation AS "totalValuation",
@@ -38,9 +57,11 @@ function createReportsRepository(pool) {
         (s.gross_sales - s.returns)::numeric AS "todayNetRevenue",
         s.gross_sales AS "todayGrossSales",
         s.returns AS "todayReturns",
+        (SELECT count(*)::integer FROM public.stock_requests WHERE status = 'PENDING') AS "pendingRequests",
         r.price_change_count AS "todayPriceChanges"
       FROM product_stats p
       CROSS JOIN low_stock_stats l
+      CROSS JOIN movement_totals m
       CROSS JOIN today_sales s
       CROSS JOIN recent_price_changes r`);
 

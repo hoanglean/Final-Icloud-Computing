@@ -104,7 +104,11 @@ async function dashboardRoutes(req, res, { url, user, session, reportsRepository
         '<main class="workspace"><h1>Bạn không có quyền vào trang quản trị.</h1><a class="button" href="/staff">Về trang nhân viên</a></main>',
         user, session, 403, '/admin');
     }
-    const stats = await reportsRepository.dashboardSummary();
+    const [summary, categoryRevenue] = await Promise.all([
+      reportsRepository.dashboardSummary(),
+      reportsRepository.revenueByCategory()
+    ]);
+    const stats = { ...summary, categoryRevenue };
     if (req.headers.accept?.includes('application/json')) return json(res, stats);
     return send(res, 'Trang quản trị', homePage(user, stats), user, session, 200, '/admin');
   }

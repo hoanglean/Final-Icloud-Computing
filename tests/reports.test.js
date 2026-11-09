@@ -98,6 +98,35 @@ test('dashboard and business reports repository logic', async t => {
     assert.equal(Number(byCategory[0].netRevenue), 64000);
   });
 
+  await t.test('overview totals count receipts and sales across all dates and deduct approved returns only', async () => {
+    const before = await reportsRepository.dashboardSummary();
+    await db.exec('BEGIN');
+    try {
+      await db.exec(`INSERT INTO stock_movements(product_id, type, quantity, unit_price, user_id, created_at)
+        VALUES (1, 'IN', 25, 12000, 1, '2020-01-01T00:00:00Z');
+        INSERT INTO stock_movements(product_id, type, quantity, unit_price, user_id, note)
+        VALUES (1, 'ADJUST_IN', 7, 12000, 1, 'Not a receipt');`);
+      const sale = (await db.query(`INSERT INTO stock_movements(product_id, type, quantity, unit_price, user_id, created_at)
+        VALUES (2, 'SALE', 2, 20000, 2, '2021-01-01T00:00:00Z') RETURNING id`)).rows[0];
+      await db.query(`INSERT INTO stock_movements(product_id, type, quantity, unit_price, user_id, related_movement_id)
+        VALUES (2, 'RETURN', 1, 20000, 1, $1)`, [sale.id]);
+      await db.exec(`INSERT INTO stock_requests(type, product_id, quantity, reason, requested_by)
+        VALUES ('DAMAGE', 1, 3, 'Pending damage must not change totals', 2);`);
+      const after = await reportsRepository.dashboardSummary();
+      assert.equal(Number(after.totalReceived) - Number(before.totalReceived), 25);
+      assert.equal(Number(after.receiptCount) - Number(before.receiptCount), 1);
+      assert.equal(Number(after.totalSold) - Number(before.totalSold), 2);
+      assert.equal(Number(after.saleCount) - Number(before.saleCount), 1);
+      assert.equal(Number(after.totalReturned) - Number(before.totalReturned), 1);
+      assert.equal(Number(after.grossRevenue) - Number(before.grossRevenue), 40000);
+      assert.equal(Number(after.returnsValue) - Number(before.returnsValue), 20000);
+      assert.equal(Number(after.netRevenue) - Number(before.netRevenue), 20000);
+      assert.equal(after.pendingRequests - before.pendingRequests, 1);
+      const revenue = await reportsRepository.revenueSummary();
+      assert.equal(String(after.netRevenue), String(revenue.netRevenue));
+    } finally { await db.exec('ROLLBACK'); }
+  });
+
   await t.test('handles empty dataset without errors', async () => {
     // Filter for a future date where no movements exist
     const futureDate = '2099-01-01T00:00:00Z';
@@ -238,6 +267,24 @@ test('dashboard and reports HTTP routes integration', async t => {
     assert.ok(reports.text.includes('href="/reports" aria-current="page"'));
   });
 
+  await t.test('overview exposes all-time figures and category chart only to admin', async () => {
+    const response = await admin('/admin', null, { headers: { accept: 'application/json' } });
+    assert.equal(response.status, 200);
+    const stats = JSON.parse(response.text);
+    for (const key of ['totalReceived', 'totalSold', 'totalReturned', 'netRevenue', 'pendingRequests']) {
+      assert.ok(Object.hasOwn(stats, key), key);
+      assert.equal(Number(stats[key]), 0);
+    }
+    assert.deepEqual(stats.categoryRevenue, []);
+    const page = await admin('/admin');
+    for (const label of ['Tổng lượng nhập', 'Tổng lượng bán', 'Doanh thu thuần', 'Doanh thu theo danh mục']) assert.ok(page.text.includes(label));
+    assert.ok(page.text.includes('Chưa có dữ liệu doanh thu'));
+    assert.ok(!page.text.includes('type="date"'));
+    const denied = await staff('/admin', null, { headers: { accept: 'application/json' } });
+    assert.equal(denied.status, 403);
+    assert.ok(!denied.text.includes('categoryRevenue'));
+  });
+
   await t.test('reports route supports period query filter', async () => {
     const todayReport = await admin('/reports?period=today');
     assert.equal(todayReport.status, 200);
@@ -299,4 +346,23 @@ test('dashboard and reports HTTP routes integration', async t => {
         assert.ok(csvRes.text.includes('BÁO CÁO KINH DOANH VÀ BIẾN ĐỘNG GIÁ - KHO VIỆT'));
     assert.ok(csvRes.text.includes('Doanh thu thuần (Net Revenue)'));
   });
+});
+
+test('overview chart escapes labels and renders exact amounts with a valid negative baseline', () => {
+  const { homePage } = require('../src/views/dashboard/home');
+  const html = homePage({ role: 'admin', name: '<script>name</script>' }, {
+    categoryRevenue: [
+      { categoryName: '<img src=x onerror=alert(1)>', netRevenue: '-12000', grossSales: '0', returns: '12000' },
+      { categoryName: 'Other', netRevenue: '50000', grossSales: '50000', returns: '0' }
+    ], netRevenue: '9007199254740993', topLowStock: []
+  });
+  assert.ok(html.includes('9.007.199.254.740.993'));
+  assert.ok(html.includes('chart-bar-negative'));
+  assert.ok(html.includes('&lt;img'));
+  assert.ok(!html.includes('<img'));
+  assert.ok(!html.includes('<script>'));
+  assert.ok(!html.includes('NaN') && !html.includes('Infinity'));
+  const attributes = [...html.matchAll(/(?:x|y|width|height)="(-?\d+(?:\.\d+)?)"/g)];
+  assert.ok(attributes.length > 0);
+  assert.ok(attributes.every(([, value]) => Number(value) >= 0));
 });
