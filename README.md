@@ -2,7 +2,7 @@
 
 Ứng dụng quản lý cửa hàng dùng Node.js 22 trở lên, giao diện HTML/CSS và PostgreSQL trên Supabase. Phần chính của cả bốn thành viên đã được tích hợp vào `main`: tài khoản, danh mục, sản phẩm/ảnh, kho/bán hàng, định giá, tổng quan/báo cáo và yêu cầu trả hàng/hàng hỏng.
 
-Cập nhật ngày **01/11/2026**, sau khi PR #1, #2 và #3 đã được merge vào `main`. Bản tích hợp đã qua kiểm thử tự động và trình duyệt; chưa triển khai công khai lên Render và chưa kiểm chứng giao dịch đồng thời bằng nhiều kết nối PostgreSQL thật. Tiến độ và phần việc còn lại của nhóm nằm trong [docs/TEAM.md](docs/TEAM.md).
+Cập nhật ngày **12/11/2026**. Các chức năng chính của bốn thành viên đã có trên `main` và bộ kiểm thử tự động đã chạy thành công trên GitHub Actions. Ứng dụng chưa triển khai công khai lên Render. Xem phân công tại [docs/TEAM.md](docs/TEAM.md).
 
 ## Chức năng và tiến độ
 
@@ -251,7 +251,11 @@ Sơ đồ phản ánh các file trong bản đang phát triển; các file `.git
 npm test
 ```
 
-Lần kiểm tra ngày 01/11/2026 trên `main` đã merge đủ bốn phần (mã nguồn nghiệp vụ tại commit `1d9809d`): **98 kiểm thử đạt, 0 lỗi**. Bộ kiểm thử dùng PostgreSQL qua PGlite với dữ liệu riêng, áp dụng đầy đủ migration và không thay đổi database Supabase thật. Nội dung gồm:
+Chạy lệnh trên trong thư mục dự án sau khi cài thư viện bằng `npm ci`. Lần kiểm thử trên máy ngày 09/11/2026 với bản tổng quan mới (commit `c9b2206`) đạt **104/104 bài**.
+
+[GitHub Actions](https://github.com/hoanglean/Final-Icloud-Computing/actions) dùng Node.js 22, chạy `npm ci` rồi `npm test` khi push lên `main` hoặc mở hay cập nhật PR vào `main`. Để chạy thủ công, chọn **Kiem thu Kho Viet → Run workflow**. Để xem chi tiết, mở lượt chạy rồi chọn **test → Run npm test**. [Lượt chạy đầu tiên](https://github.com/hoanglean/Final-Icloud-Computing/actions/runs/43223565677) đã thành công.
+
+Bộ kiểm thử dùng PGlite với dữ liệu riêng và áp dụng các migration của dự án. Workflow chạy được trước khi deploy Render và không cần thông tin kết nối Supabase. Các bài kiểm thử bao phủ các nhóm chức năng dưới đây.
 
 - Đăng nhập, đổi mật khẩu, CSRF, phân quyền và hết hiệu lực phiên.
 - Tạo/đổi quyền/khóa tài khoản, email trùng và bảo vệ admin cuối cùng.
@@ -264,7 +268,7 @@ Lần kiểm tra ngày 01/11/2026 trên `main` đã merge đủ bốn phần (m�
 - Trả hàng ngừng kinh doanh, duyệt hàng hỏng đã gửi trước khi ngừng bán, lý do nhiều dòng và doanh thu/lịch sử giá sau xử lý yêu cầu.
 - Quản lý quy tắc giá, báo cáo theo ngày Việt Nam, ngày sai/đảo ngược, giao dịch sát cuối ngày và tổng tiền lớn.
 
-Kiểm tra trình duyệt được thực hiện riêng, không thuộc lệnh `npm test`: **56 lượt kiểm tra**, gồm 28 màn hình theo quyền admin/nhân viên ở hai chiều rộng 1440 px và 375 px. Các màn hình được kiểm tra không có trang chờ nghiệp vụ, không tràn ngang và không phát sinh lỗi chính sách bảo mật.
+Kiểm tra trình duyệt được thực hiện bằng một lần chạy riêng. Lần kiểm tra ngày 09/11/2026 có **84 lượt hiển thị** trên Chrome, gồm 28 màn hình theo quyền admin và nhân viên ở ba độ rộng 1366, 1440 và 1920 px. Các màn hình không bị tràn ngang và không phát sinh lỗi chính sách bảo mật.
 
 Đã chạy luồng tạo tài khoản → đổi quyền/khóa/mở khóa → danh mục/sản phẩm/ảnh → quy tắc giá → nhập kho/bán hàng/kiểm kê → gửi/duyệt/từ chối yêu cầu → đối chiếu doanh thu và lịch sử giá. Đổi mật khẩu, hủy phiên cũ, chặn truy cập trái quyền và trả sản phẩm ngừng bán cũng đã được kiểm tra. Các thao tác tạo/sửa dữ liệu này dùng database thử riêng.
 
