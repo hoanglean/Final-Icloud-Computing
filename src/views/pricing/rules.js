@@ -121,9 +121,9 @@ function pricingRulesPage(products, categoriesOrSession, sessionOrOptions, optio
           <thead>
             <tr>
               <th scope="col">Sản phẩm</th>
-              <th scope="col">Tồn kho</th>
-              <th scope="col">Giá cơ sở</th>
-              <th scope="col">Giá bán hiện tại</th>
+              <th scope="col" class="num">Tồn kho</th>
+              <th scope="col" class="num">Giá cơ sở</th>
+              <th scope="col" class="num">Giá bán hiện tại</th>
               <th scope="col">Quy tắc định giá</th>
               <th scope="col">Trạng thái</th>
               <th scope="col">Thao tác</th>

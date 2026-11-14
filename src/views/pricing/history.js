@@ -58,8 +58,8 @@ function priceHistoryPage(rows, products = [], { selectedProduct = null, notice 
               <th scope="col">Mã</th>
               <th scope="col">Thời gian</th>
               <th scope="col">Sản phẩm</th>
-              <th scope="col">Giá trước</th>
-              <th scope="col">Giá sau</th>
+              <th scope="col" class="num">Giá trước</th>
+              <th scope="col" class="num">Giá sau</th>
               <th scope="col">Biến động</th>
               <th scope="col">Lý do điều chỉnh</th>
               <th scope="col">Người thực hiện</th>

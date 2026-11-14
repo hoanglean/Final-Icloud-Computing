@@ -50,7 +50,7 @@ function requestsPage(rows, { isAdmin, session, notice = '' }) {
   }).join('');
   return `<main class="workspace"><div class="page-title"><div><h1>${isAdmin ? 'Duyệt yêu cầu' : 'Yêu cầu của tôi'}</h1><p class="muted">${isAdmin ? 'Xem yêu cầu trả hàng, hàng hỏng; duyệt hoặc từ chối mỗi yêu cầu đúng một lần.' : 'Chỉ hiển thị yêu cầu do tài khoản của bạn gửi.'}</p></div></div>
     ${notice ? `<div class="alert success" role="status">${escape(notice)}</div>` : ''}
-    ${rows.length ? `<div class="table-scroll"><table class="records-table"><caption class="category-sr-only">${isAdmin ? 'Danh sách yêu cầu chờ xử lý và đã xử lý' : 'Yêu cầu của tôi'}</caption><thead><tr><th scope="col">Mã / thời gian</th><th scope="col">Loại</th><th scope="col">Sản phẩm</th><th scope="col">Số lượng</th><th scope="col">Lý do</th>${isAdmin ? '<th scope="col">Người gửi</th>' : ''}<th scope="col">Trạng thái</th><th scope="col">Xử lý</th></tr></thead><tbody>${entries}</tbody></table></div>` : '<div class="category-empty"><h2>Chưa có yêu cầu</h2><p>Các yêu cầu trả hàng hoặc hàng hỏng sẽ hiển thị tại đây.</p></div>'}
+    ${rows.length ? `<div class="table-scroll"><table class="records-table"><caption class="category-sr-only">${isAdmin ? 'Danh sách yêu cầu chờ xử lý và đã xử lý' : 'Yêu cầu của tôi'}</caption><thead><tr><th scope="col">Mã / thời gian</th><th scope="col">Loại</th><th scope="col">Sản phẩm</th><th scope="col" class="num">Số lượng</th><th scope="col">Lý do</th>${isAdmin ? '<th scope="col">Người gửi</th>' : ''}<th scope="col">Trạng thái</th><th scope="col">Xử lý</th></tr></thead><tbody>${entries}</tbody></table></div>` : '<div class="category-empty"><h2>Chưa có yêu cầu</h2><p>Các yêu cầu trả hàng hoặc hàng hỏng sẽ hiển thị tại đây.</p></div>'}
   </main>`;
 }
 

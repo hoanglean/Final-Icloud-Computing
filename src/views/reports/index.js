@@ -134,11 +134,11 @@ function reportsPage({ summary = {}, byCategory = [], fluctuations = [], filters
           <thead>
             <tr>
               <th scope="col">Danh mục</th>
-              <th scope="col">Số lượng bán</th>
-              <th scope="col">Doanh số bán</th>
-              <th scope="col">Số lượng trả</th>
-              <th scope="col">Giá trị trả</th>
-              <th scope="col">Doanh thu thuần</th>
+              <th scope="col" class="num">Số lượng bán</th>
+              <th scope="col" class="num">Doanh số bán</th>
+              <th scope="col" class="num">Số lượng trả</th>
+              <th scope="col" class="num">Giá trị trả</th>
+              <th scope="col" class="num">Doanh thu thuần</th>
             </tr>
           </thead>
           <tbody>${categoryRows}</tbody>
@@ -165,10 +165,10 @@ function reportsPage({ summary = {}, byCategory = [], fluctuations = [], filters
           <thead>
             <tr>
               <th scope="col">Sản phẩm</th>
-              <th scope="col">Tần suất</th>
-              <th scope="col">Giá thấp nhất</th>
-              <th scope="col">Giá cao nhất</th>
-              <th scope="col">Giá hiện tại</th>
+              <th scope="col" class="num">Tần suất</th>
+              <th scope="col" class="num">Giá thấp nhất</th>
+              <th scope="col" class="num">Giá cao nhất</th>
+              <th scope="col" class="num">Giá hiện tại</th>
             </tr>
           </thead>
           <tbody>${fluctuationRows}</tbody>
