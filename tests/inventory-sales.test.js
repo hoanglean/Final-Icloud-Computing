@@ -254,6 +254,37 @@ test('integrated inventory and sales through authenticated HTTP and PostgreSQL',
       assert.deepEqual(responses.map(row => row.status).sort(), [303,409]);
       assert.equal((await stock()).stock, 3);
     });
+
+    await t.test('paginates scoped history and filters by Vietnam calendar days', async () => {
+      const { historyDateRange } = require('../src/utils/history');
+      const route = '/sales/history';
+      const filters = new URL(route + '?period=yesterday', 'http://localhost');
+      assert.deepEqual(historyDateRange(filters, new Date('2026-01-01T17:00:00Z')), {
+        period: 'yesterday', fromDate: '2026-01-01T00:00:00+07:00', toDate: '2026-01-02T00:00:00+07:00'
+      });
+      const { fromDate, toDate } = historyDateRange(filters);
+      await db.exec('BEGIN');
+      try {
+        await db.query("INSERT INTO stock_movements(product_id,type,quantity,unit_price,user_id,created_at) SELECT 1,'SALE',1,100000,2,$1::timestamptz FROM generate_series(1,105)", [fromDate]);
+        await db.query("INSERT INTO stock_movements(product_id,type,quantity,unit_price,user_id,created_at) VALUES (2,'SALE',1,200000,3,$1), (1,'SALE',1,100000,2,$2), (1,'IN',1,100000,1,$1)", [fromDate, toDate]);
+        const second = await staff(route + '?period=yesterday&page_size=100&page=2', undefined, jsonOptions);
+        assert.equal(second.status, 200);
+        const older = JSON.parse(second.text);
+        assert.equal(older.length, 5);
+        assert.ok(older.every(row => row.userId === 2 && new Date(row.createdAt).getTime() === Date.parse(fromDate)));
+        const listing = await staff(route + '?period=yesterday&page_size=50');
+        assert.ok(listing.text.includes('Hiển thị 1–50 / 105 mục'));
+        assert.ok(listing.text.includes('period=yesterday&amp;page_size=50&amp;page=2'));
+        assert.ok(!listing.text.includes('btn-print-receipt'));
+        const adminSales = await admin('/admin/sales-history?period=yesterday&page=999');
+        assert.ok(adminSales.text.includes('Hiển thị 101–106 / 106 mục'));
+        const stockHistory = await admin('/inventory/history?period=yesterday');
+        assert.ok(stockHistory.text.includes('Hiển thị 1–20 / 107 mục'));
+      } finally {
+        await db.exec('ROLLBACK');
+      }
+    });
+
   } finally {
     if (server) { server.closeAllConnections(); await new Promise(resolve => server.close(resolve)); }
     sessions.clear();

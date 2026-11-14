@@ -2,7 +2,7 @@
 
 Ứng dụng quản lý cửa hàng dùng Node.js 22 trở lên, giao diện HTML/CSS và PostgreSQL trên Supabase. Phần chính của cả bốn thành viên đã được tích hợp vào `main`: tài khoản, danh mục, sản phẩm/ảnh, kho/bán hàng, định giá, tổng quan/báo cáo và yêu cầu trả hàng/hàng hỏng.
 
-Cập nhật ngày **12/11/2026**. Các chức năng chính của bốn thành viên đã có trên `main` và bộ kiểm thử tự động đã chạy thành công trên GitHub Actions. Ứng dụng chưa triển khai công khai lên Render. Xem phân công tại [docs/TEAM.md](docs/TEAM.md).
+Cập nhật ngày **14/11/2026**. Các chức năng chính của bốn thành viên đã có trên `main` và bộ kiểm thử tự động đã chạy thành công trên GitHub Actions. Ứng dụng chưa triển khai công khai lên Render. Xem phân công tại [docs/TEAM.md](docs/TEAM.md).
 
 ## Chức năng và tiến độ
 
@@ -24,7 +24,7 @@ Cập nhật ngày **12/11/2026**. Các chức năng chính của bốn thành v
 | Tổng quan và báo cáo | Tổng tồn, cảnh báo, doanh thu thuần SALE trừ RETURN; lọc theo ngày Việt Nam, tổng hợp theo danh mục và biến động giá |
 | Triển khai Render | Chưa triển khai công khai |
 
-Giao diện có thanh chức năng theo vai trò và bố cục thích ứng cho máy tính, máy tính bảng, điện thoại. Tổng quan và báo cáo chỉ dành cho admin.
+Giao diện V-Inventory có thanh bên theo vai trò, ô tìm sản phẩm theo tên hoặc ID trên thanh trên và hộp thoại xác nhận cho các thao tác như đổi quyền tài khoản, ngừng bán sản phẩm và duyệt yêu cầu. Tổng quan và báo cáo chỉ dành cho admin.
 
 ## Chạy ứng dụng
 
@@ -99,7 +99,7 @@ Admin vào **Sản phẩm → Thêm sản phẩm/Sửa sản phẩm → Ảnh s�
 - Admin vào **Nhập kho**, chọn sản phẩm đang kinh doanh và nhập số lượng nguyên dương. Kiểm kê chỉ cho phép tăng hoặc giảm tồn, bắt buộc ghi lý do; không được giảm quá số lượng hiện có.
 - Nhân viên vào **Bán hàng**, chọn sản phẩm và số lượng. Mỗi lần gửi ghi nhận một sản phẩm; không phải giỏ hàng nhiều sản phẩm. Máy chủ lấy giá hiện tại và kiểm tra tồn, không tin đơn giá từ trình duyệt.
 - Giao dịch bán lưu giá trước khi trừ tồn; giá tính lại sau giao dịch áp dụng cho lần bán tiếp theo. Lỗi ghi lịch sử hoặc tính giá sẽ hoàn tác cả thay đổi tồn.
-- Lịch sử kho và lịch sử bán hiển thị tối đa 100 giao dịch mới nhất; chưa có bộ lọc thời gian hoặc phân trang. Cảnh báo tồn thấp dùng ngưỡng `low_stock` của quy tắc sản phẩm, mặc định 10 khi chưa có quy tắc; trạng thái bật/tắt quy tắc giá hiện không thay đổi ngưỡng cảnh báo này.
+- Lịch sử kho, lịch sử bán cá nhân và lịch sử bán của nhân viên dành cho admin hiển thị 20 dòng mỗi trang theo mặc định. Chọn **Hôm nay**, **Hôm qua**, **7 ngày qua** hoặc **Tháng này** theo giờ Việt Nam rồi bấm **Áp dụng**. Các nút chuyển trang giữ bộ lọc đã chọn. Cảnh báo tồn thấp dùng ngưỡng `low_stock` của quy tắc sản phẩm, mặc định 10 khi chưa có quy tắc; trạng thái bật/tắt quy tắc giá hiện không thay đổi ngưỡng cảnh báo này.
 - Nhân viên và admin gửi yêu cầu tại **Yêu cầu trả hàng/Báo hàng hỏng**; admin xử lý tại **Duyệt yêu cầu**. Gửi hoặc từ chối chưa đổi tồn; chỉ duyệt mới tạo giao dịch kho. Lý do hỗ trợ nhiều dòng, tối đa 1000 ký tự.
 - Giao dịch bán cũ vẫn được trả khi sản phẩm đã ngừng kinh doanh. Yêu cầu hàng hỏng đã gửi trước khi ngừng bán cũng duyệt được nếu còn đủ tồn. Xử lý yêu cầu không tự mở bán lại sản phẩm; tạo mới yêu cầu hàng hỏng vẫn chỉ chọn sản phẩm đang kinh doanh.
 
@@ -107,10 +107,10 @@ Admin vào **Sản phẩm → Thêm sản phẩm/Sửa sản phẩm → Ảnh s�
 
 - Admin vào **Quy tắc định giá** để thêm/sửa ngưỡng tồn thấp, tồn cao, tỷ lệ tăng/giảm, giá sàn/trần; có thể bật/tắt quy tắc hoặc tính lại giá thủ công.
 - Khi bật quy tắc: tồn nhỏ hơn hoặc bằng ngưỡng thấp thì tăng giá; tồn lớn hơn hoặc bằng ngưỡng cao thì giảm giá; ở giữa thì dùng giá cơ sở. Luôn tính từ `base_price`, giới hạn trong giá sàn/trần rồi làm tròn đến đồng. Không có hoặc tắt quy tắc thì dùng giá cơ sở.
-- **Lịch sử giá** lọc theo sản phẩm và hiển thị tối đa 100 lần thay đổi gần nhất. Tính lại mà giá không đổi thì không tạo thêm lịch sử.
-- **Tổng quan** thống kê sản phẩm đang kinh doanh, tổng tồn, giá trị tồn theo giá cơ sở, cảnh báo tồn và doanh thu thuần hôm nay. Giá trị tồn theo giá cơ sở không phải lợi nhuận hoặc giá vốn nhập hàng thực tế.
+- **Lịch sử giá** lọc theo sản phẩm và hiển thị 20 dòng mỗi trang theo mặc định. Các nút chuyển trang giữ sản phẩm đã chọn. Tính lại mà giá không đổi thì không tạo thêm lịch sử.
+- **Tổng quan** hiển thị ba thẻ tổng lượng nhập, tổng lượng bán và doanh thu thuần trên toàn bộ thời gian. Trang có biểu đồ doanh thu theo danh mục, doanh số bán, giá trị hàng trả, số yêu cầu chờ duyệt và hàng tồn thấp. Giá trị tồn kho được tính theo giá cơ sở.
 - **Báo cáo, thống kê** tính doanh thu thuần bằng tiền SALE trừ tiền RETURN đã ghi nhận. Yêu cầu chưa duyệt, hàng hỏng và điều chỉnh kiểm kê không tính vào doanh thu. Dữ liệu bán/hoàn trả cũ vẫn được giữ khi sản phẩm ngừng kinh doanh.
-- Chọn toàn bộ, hôm nay, 7 ngày, 30 ngày hoặc khoảng ngày tùy chọn rồi bấm **Xem báo cáo**. Khoảng 7/30 ngày gồm ngày hiện tại, theo giờ Việt Nam; ngày không hợp lệ hoặc từ ngày lớn hơn đến ngày sẽ được báo lỗi. Báo cáo có tổng hợp theo danh mục và thống kê biến động giá.
+- Chọn toàn bộ, hôm nay, 7 ngày, 30 ngày hoặc khoảng ngày tùy chọn rồi bấm **Xem báo cáo**. Khoảng 7/30 ngày gồm ngày hiện tại, theo giờ Việt Nam; ngày không hợp lệ hoặc từ ngày lớn hơn đến ngày sẽ được báo lỗi. Báo cáo có tổng hợp theo danh mục, thống kê biến động giá và xuất CSV theo khoảng thời gian đã chọn.
 
 ## Phân quyền
 
@@ -178,12 +178,14 @@ Final-Icloud/
 │   ├── utils/
 │   │   ├── html.js                       # Escape nội dung trước khi đưa vào HTML
 │   │   ├── http.js                       # Đọc form, chuyển hướng và trả trang HTML
+│   │   ├── history.js                    # Phân trang và khoảng ngày theo giờ Việt Nam
 │   │   ├── product-form.js               # Đọc multipart và giới hạn dung lượng tải lên
 │   │   ├── validation.js                 # Kiểm tra ID, tên, giá và trạng thái
 │   │   └── transaction.js                # BEGIN, COMMIT/ROLLBACK và giải phóng client
 │   └── views/
 │       ├── layout.js                     # Bố cục chung, thanh trên và vùng nội dung
 │       ├── sidebar.js                    # Thanh chức năng bên trái theo vai trò
+│       ├── history-controls.js           # Bộ lọc ngày và nút chuyển trang
 │       ├── auth/
 │       │   ├── login.js                  # Giao diện đăng nhập
 │       │   └── change-password.js        # Giao diện đổi mật khẩu
@@ -201,7 +203,7 @@ Final-Icloud/
 │   │   ├── tokens.css                    # Màu, font, kích thước và khoảng cách dùng chung
 │   │   ├── base.css                      # Nền tảng hiển thị và focus bàn phím
 │   │   └── style.css                     # Bố cục thích ứng và giao diện chức năng
-│   ├── js/                               # Chưa có mã JavaScript phía trình duyệt
+│   ├── js/app.js                         # Hộp thoại xác nhận thao tác
 │   └── images/                           # Chưa có tệp ảnh
 ├── database/                             # Thiết lập database; dữ liệu thật ở Supabase
 │   ├── certs/
@@ -251,7 +253,7 @@ Sơ đồ phản ánh các file trong bản đang phát triển; các file `.git
 npm test
 ```
 
-Chạy lệnh trên trong thư mục dự án sau khi cài thư viện bằng `npm ci`. Lần kiểm thử trên máy ngày 09/11/2026 với bản tổng quan mới (commit `c9b2206`) đạt **104/104 bài**.
+Chạy lệnh trên trong thư mục dự án sau khi cài thư viện bằng `npm ci`. Lần kiểm thử trên máy ngày 14/11/2026 đạt **106/106 bài**, gồm các ca phân trang qua dòng 100, giữ bộ lọc sản phẩm khi chuyển trang và đối chiếu ngày Việt Nam cho lịch sử bán hàng.
 
 [GitHub Actions](https://github.com/hoanglean/Final-Icloud-Computing/actions) dùng Node.js 22, chạy `npm ci` rồi `npm test` khi push lên `main` hoặc mở hay cập nhật PR vào `main`. Để chạy thủ công, chọn **Kiem thu Kho Viet → Run workflow**. Để xem chi tiết, mở lượt chạy rồi chọn **test → Run npm test**. [Lượt chạy đầu tiên](https://github.com/hoanglean/Final-Icloud-Computing/actions/runs/43223565677) đã thành công.
 
@@ -268,10 +270,10 @@ Bộ kiểm thử dùng PGlite với dữ liệu riêng và áp dụng các migr
 - Trả hàng ngừng kinh doanh, duyệt hàng hỏng đã gửi trước khi ngừng bán, lý do nhiều dòng và doanh thu/lịch sử giá sau xử lý yêu cầu.
 - Quản lý quy tắc giá, báo cáo theo ngày Việt Nam, ngày sai/đảo ngược, giao dịch sát cuối ngày và tổng tiền lớn.
 
-Kiểm tra trình duyệt được thực hiện bằng một lần chạy riêng. Lần kiểm tra ngày 09/11/2026 có **84 lượt hiển thị** trên Chrome, gồm 28 màn hình theo quyền admin và nhân viên ở ba độ rộng 1366, 1440 và 1920 px. Các màn hình không bị tràn ngang và không phát sinh lỗi chính sách bảo mật.
+Kiểm tra trình duyệt được thực hiện bằng một lần chạy riêng. Lần kiểm tra giao diện ngày 14/11/2026 có **84 lượt hiển thị** trên Chrome, gồm 28 màn hình theo quyền admin và nhân viên ở ba độ rộng 1366, 1440 và 1920 px. Các màn hình không bị tràn ngang và không phát sinh lỗi chính sách bảo mật.
 
 Đã chạy luồng tạo tài khoản → đổi quyền/khóa/mở khóa → danh mục/sản phẩm/ảnh → quy tắc giá → nhập kho/bán hàng/kiểm kê → gửi/duyệt/từ chối yêu cầu → đối chiếu doanh thu và lịch sử giá. Đổi mật khẩu, hủy phiên cũ, chặn truy cập trái quyền và trả sản phẩm ngừng bán cũng đã được kiểm tra. Các thao tác tạo/sửa dữ liệu này dùng database thử riêng.
 
 Đã kiểm tra kết nối đọc Supabase bằng `npm run db:check`. PGlite dùng một kết nối; các ca gửi đồng thời trong bộ test được tuần tự hóa qua pool thử, chưa chứng minh hành vi khóa giữa nhiều kết nối PostgreSQL thật. Cần kiểm tra riêng trường hợp hai nhân viên cùng bán món cuối cùng, hai admin cùng duyệt một yêu cầu và tạo yêu cầu trả đồng thời với duyệt trả.
 
-Phiên đăng nhập và giới hạn thử sai vẫn nằm trong RAM, mất khi khởi động lại và chưa dùng chung giữa các tiến trình. Trước khi triển khai công khai cần session store bền vững, HTTPS, cookie Secure và cấu hình host triển khai. Phần tiếp theo là kiểm tra giao dịch bằng nhiều kết nối PostgreSQL thật, hoàn thiện bảo mật triển khai và chạy thử trên Render.
+Phiên đăng nhập và giới hạn thử sai vẫn nằm trong RAM, mất khi khởi động lại và chưa dùng chung giữa các tiến trình. Trong phạm vi đồ án, phần triển khai còn lại là đưa ứng dụng lên Render và xác nhận đăng nhập, phân quyền và kết nối Supabase trên bản chạy công khai.

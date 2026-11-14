@@ -1,9 +1,11 @@
+const { historyPagination } = require('../history-controls');
 const { escape } = require('../../utils/html');
 
 const money = value => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND', maximumFractionDigits: 2 }).format(Number(value));
 const time = value => new Intl.DateTimeFormat('vi-VN', { timeZone: 'Asia/Saigon', dateStyle: 'short', timeStyle: 'short' }).format(new Date(value));
 
-function priceHistoryPage(rows, products = [], { selectedProduct = null, notice = '' } = {}) {
+function priceHistoryPage(history, products = [], { selectedProduct = null, notice = '' } = {}) {
+  const { rows } = history;
   const entries = rows.map(row => {
     const diff = Number(row.newPrice) - Number(row.oldPrice);
     const diffSign = diff > 0 ? `+${money(diff)}` : money(diff);
@@ -35,7 +37,7 @@ function priceHistoryPage(rows, products = [], { selectedProduct = null, notice 
 
     ${notice ? `<div class="alert success" role="status">${escape(notice)}</div>` : ''}
 
-    <form class="filter-form" method="get" action="/pricing/history">
+    <form class="filter-form card history-filters" method="get" action="/pricing/history">
       <div>
         <label for="history-product">Lọc theo sản phẩm</label>
         <select id="history-product" name="product_id">
@@ -43,11 +45,9 @@ function priceHistoryPage(rows, products = [], { selectedProduct = null, notice 
           ${products.map(p => `<option value="${p.productId || p.id}"${String(selectedProduct) === String(p.productId || p.id) ? ' selected' : ''}>ID ${p.productId || p.id} &middot; ${escape(p.productName || p.name)}</option>`).join('')}
         </select>
       </div>
-      <button class="button" type="submit">Lọc lịch sử</button>
+      <button class="button" type="submit">Áp dụng</button>
       <a class="text-link" href="/pricing/history">Xem tất cả</a>
     </form>
-
-    <p class="small management-note">Hiển thị ${rows.length} lần điều chỉnh giá${selectedProduct ? ' của sản phẩm được chọn' : ''}</p>
 
     ${rows.length ? `
       <div class="table-scroll">
@@ -74,6 +74,7 @@ function priceHistoryPage(rows, products = [], { selectedProduct = null, notice 
         <p>Lịch sử biến động giá sẽ được ghi nhận tại đây khi giá bán của sản phẩm thay đổi.</p>
       </div>
     `}
+    ${historyPagination(history, '/pricing/history', selectedProduct ? { product_id: selectedProduct } : {})}
   </main>`;
 }
 

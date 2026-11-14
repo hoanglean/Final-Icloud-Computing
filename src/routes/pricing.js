@@ -1,3 +1,4 @@
+const { historyOptions, loadHistory } = require('../utils/history');
 const { readForm, redirect, send, json } = require('../utils/http');
 const { invalid, recordId } = require('../utils/validation');
 const { savePricingRule, togglePricingRule, recalculateProductPriceManually } = require('../services/pricing');
@@ -74,12 +75,11 @@ async function pricingRoutes(req, res, { url, user, session, pricingRepository, 
     } catch (error) {
       return respond('<main class="workspace"><h1>Mã sản phẩm không hợp lệ.</h1><a class="text-link" href="/pricing/history">Về lịch sử giá</a></main>', error.status);
     }
-    const [rows, allProducts] = await Promise.all([
-      pricingRepository.history({ productId, limit: 100 }),
-      pricingRepository.listRules()
-    ]);
-    if (req.headers.accept?.includes('application/json')) return json(res, rows);
-    return respond(priceHistoryPage(rows, allProducts, { selectedProduct: productId }));
+    const wantsJson = req.headers.accept?.includes('application/json');
+    const history = await loadHistory(historyOptions(url, wantsJson ? 100 : 20),
+      pricingRepository.countHistory({ productId }), page => pricingRepository.history({ productId, ...page }));
+    if (wantsJson) return json(res, history.rows);
+    return respond(priceHistoryPage(history, await pricingRepository.listRules(), { selectedProduct: productId }));
   }
 
   // GET /pricing/:productId/edit

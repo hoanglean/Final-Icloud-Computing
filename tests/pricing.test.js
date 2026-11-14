@@ -416,6 +416,24 @@ test('pricing routes through authenticated HTTP and PostgreSQL', async t => {
     assert.equal((await admin('/pricing/history?product_id=not-an-id')).status, 400);
   });
 
+
+  await t.test('paginates price history without dropping the product filter', async () => {
+    await db.exec('BEGIN');
+    try {
+      await db.exec("INSERT INTO price_history(product_id,old_price,new_price,reason) SELECT 2,1000,2000,'Pagination test' FROM generate_series(1,101)");
+      const filters = '/pricing/history?product_id=2&page_size=100';
+      const first = await admin(filters);
+      assert.ok(first.text.includes('Hiển thị 1–100 / 101 mục'));
+      assert.ok(first.text.includes('product_id=2&amp;page_size=100&amp;page=2'));
+      const last = await admin(filters + '&page=2', undefined, { headers: { accept: 'application/json' } });
+      const rows = JSON.parse(last.text);
+      assert.equal(rows.length, 1);
+      assert.equal(rows[0].productId, 2);
+    } finally {
+      await db.exec('ROLLBACK');
+    }
+  });
+
   await t.test('rejects missing CSRF and malformed toggle values without changing prices', async () => {
     const csrf = (await admin('/pricing')).csrf;
     const before = (await db.query('SELECT enabled FROM pricing_rules WHERE product_id=1')).rows[0].enabled;

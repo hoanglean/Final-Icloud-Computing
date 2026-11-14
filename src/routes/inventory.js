@@ -1,3 +1,4 @@
+const { historyOptions, historyDateRange, loadHistory } = require('../utils/history');
 const { readForm, redirect, send, json } = require('../utils/http');
 const { invalid } = require('../utils/validation');
 const { transaction } = require('../utils/transaction');
@@ -20,11 +21,20 @@ async function inventoryRoutes(req, res, { url, user, session, productRepository
   if (req.method === 'GET') {
     if (formPage) return renderForm();
     const lowStock = url.pathname === '/inventory/low-stock';
-    const rows = lowStock ? await inventoryRepository.lowStock() : await inventoryRepository.history();
-    if (req.headers.accept?.includes('application/json')) return json(res, rows);
+    const wantsJson = req.headers.accept?.includes('application/json');
+    if (lowStock) {
+      const rows = await inventoryRepository.lowStock();
+      return wantsJson ? json(res, rows) : respond(lowStockPage(rows));
+    }
+    const { period, fromDate, toDate } = historyDateRange(url);
+    const filters = { fromDate, toDate };
+    const history = await loadHistory(historyOptions(url, wantsJson ? 100 : 20),
+      inventoryRepository.countHistory(filters), page => inventoryRepository.history({ ...filters, ...page }));
+    if (wantsJson) return json(res, history.rows);
     const notices = { receive: 'Đã nhập kho và cập nhật giá bán theo quy tắc hiện tại.', adjust: 'Đã ghi nhận kiểm kê và cập nhật giá bán theo quy tắc hiện tại.' };
     const saved = url.searchParams.get('saved');
-    return respond(lowStock ? lowStockPage(rows) : movementHistoryPage(rows, { title: 'Lịch sử kho', notice: Object.hasOwn(notices, saved) ? notices[saved] : '' }));
+    return respond(movementHistoryPage(history, { path: url.pathname, period, title: 'Lịch sử kho',
+      notice: Object.hasOwn(notices, saved) ? notices[saved] : '' }));
   }
   if (!(req.headers['content-type'] || '').toLowerCase().startsWith('application/x-www-form-urlencoded')) return renderForm({}, 'Biểu mẫu không được hỗ trợ.', 415);
   const form = await readForm(req);

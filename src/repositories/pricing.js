@@ -1,3 +1,5 @@
+const historyFilter = "WHERE ($1::integer IS NULL OR h.product_id = $1)";
+
 function createPricingRepository(pool) {
   return {
     async listCategories() {
@@ -73,7 +75,11 @@ function createPricingRepository(pool) {
         WHERE p.id = $1`, [productId]);
       return rows[0];
     },
-    async history({ productId = null, limit = 100 } = {}) {
+    async countHistory({ productId = null } = {}) {
+      const { rows } = await pool.query(`SELECT count(*) AS total FROM public.price_history h ${historyFilter}`, [productId]);
+      return Number(rows[0].total);
+    },
+    async history({ productId = null, limit = 100, offset = 0 } = {}) {
       const boundedLimit = Math.min(Math.max(Number(limit) || 100, 1), 500);
       const { rows } = await pool.query(`SELECT h.id, h.product_id AS "productId", p.name AS "productName",
         h.old_price AS "oldPrice", h.new_price AS "newPrice", h.reason,
@@ -81,9 +87,9 @@ function createPricingRepository(pool) {
         FROM public.price_history h
         JOIN public.products p ON p.id = h.product_id
         LEFT JOIN public.users u ON u.id = h.changed_by
-        WHERE ($1::integer IS NULL OR h.product_id = $1)
+        ${historyFilter}
         ORDER BY h.created_at DESC, h.id DESC
-        LIMIT $2`, [productId, boundedLimit]);
+        LIMIT $2 OFFSET $3`, [productId, boundedLimit, offset]);
       return rows;
     }
   };

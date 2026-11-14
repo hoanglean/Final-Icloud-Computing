@@ -1,3 +1,4 @@
+const { historyOptions, historyDateRange, loadHistory } = require('../utils/history');
 const { readForm, redirect, send, json } = require('../utils/http');
 const { transaction } = require('../utils/transaction');
 const { applyStockChange } = require('../services/inventory');
@@ -16,9 +17,14 @@ async function salesRoutes(req, res, { url, user, session, pool, productReposito
   const renderForm = async (values = {}, error = '', status = 200) => respond(stockFormPage(await productRepository.list({ status: 'active' }), session, { mode: 'sale', values, error }), status);
   if (req.method === 'GET') {
     if (url.pathname === '/sales') return renderForm();
-    const rows = await inventoryRepository.history({ salesOnly: true, userId: adminHistory ? null : user.id });
-    if (req.headers.accept?.includes('application/json')) return json(res, rows);
-    return respond(movementHistoryPage(rows, {
+    const wantsJson = req.headers.accept?.includes('application/json');
+    const { period, fromDate, toDate } = historyDateRange(url);
+    const filters = { salesOnly: true, userId: adminHistory ? null : user.id, fromDate, toDate };
+    const history = await loadHistory(historyOptions(url, wantsJson ? 100 : 20),
+      inventoryRepository.countHistory(filters), page => inventoryRepository.history({ ...filters, ...page }));
+    if (wantsJson) return json(res, history.rows);
+    return respond(movementHistoryPage(history, {
+      path: url.pathname, period,
       title: adminHistory ? 'Lịch sử bán hàng nhân viên' : 'Lịch sử bán của tôi',
       salesOnly: true, showUser: adminHistory,
       notice: !adminHistory && url.searchParams.get('saved') === 'sold' ? 'Đã ghi nhận giao dịch bán hàng.' : ''

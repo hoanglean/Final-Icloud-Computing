@@ -18,14 +18,14 @@ const icons = {
   users: 'M16 21v-3a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v3M9 3a4 4 0 1 0 0 8 4 4 0 0 0 0-8Zm8 0a4 4 0 0 1 0 8m2 3a4 4 0 0 1 3 4v3'
 };
 
-function sidebar(user, currentPath) {
+function sidebar(user, currentPath, brand) {
   const admin = user.role === 'admin';
   const link = (path, label, icon) => `<a class="sidebar-link${currentPath === path ? ' active' : ''}" href="${path}"${currentPath === path ? ' aria-current="page"' : ''}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${icons[icon]}"></path></svg><span>${escape(label)}</span></a>`;
   const groups = navigation.map(group => {
     const items = group.items.filter(item => (!item.adminOnly || admin) && (!item.staffOnly || user.role === 'staff'));
     return items.length ? `<section class="sidebar-group"><h2>${escape(group.title)}</h2>${items.map(item => link(item.path, admin && item.adminLabel ? item.adminLabel : item.label, item.icon)).join('')}</section>` : '';
   }).join('');
-  return `<aside class="sidebar"><input class="sidebar-toggle" type="checkbox" id="sidebar-toggle" aria-label="Mở hoặc đóng menu chức năng"><label class="sidebar-heading" for="sidebar-toggle"><span>Chức năng</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"></path></svg></label><nav class="sidebar-nav" aria-label="Chức năng nghiệp vụ">${link(roleHome(user.role), admin ? 'Tổng quan' : 'Trang chủ', 'home')}${groups}</nav></aside>`;
+  return `<aside class="sidebar"><div class="sidebar-brand">${brand}</div><input class="sidebar-toggle" type="checkbox" id="sidebar-toggle" aria-label="Mở hoặc đóng menu chức năng"><label class="sidebar-heading" for="sidebar-toggle"><span>Chức năng</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"></path></svg></label><nav class="sidebar-nav" aria-label="Chức năng nghiệp vụ">${link(roleHome(user.role), admin ? 'Tổng quan' : 'Trang chủ', 'home')}${groups}</nav></aside>`;
 }
 
 module.exports = { sidebar };

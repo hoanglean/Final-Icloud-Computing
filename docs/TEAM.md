@@ -57,7 +57,7 @@ Cần làm tiếp:
 
 Đã có giao diện nhập kho, kiểm kê tăng/giảm có lý do, bán hàng cho nhân viên, lịch sử kho/bán và cảnh báo tồn thấp. Máy chủ kiểm tra quyền, CSRF, số lượng nguyên dương, tồn đủ và giới hạn số nguyên. Lịch sử cá nhân lọc theo người đăng nhập; admin chỉ xem lịch sử bán của nhân viên.
 
-`applyStockChange` khóa sản phẩm, ghi giao dịch với đơn giá gốc, cập nhật tồn và tính lại giá trong cùng transaction. IN, SALE, RETURN, ADJUST_IN, ADJUST_OUT và DAMAGE đã được dùng bởi luồng kho/bán và duyệt yêu cầu. Một lần bán hiện ghi một sản phẩm; lịch sử tối đa 100 dòng, chưa có lọc thời gian/phân trang.
+`applyStockChange` khóa sản phẩm, ghi giao dịch với đơn giá gốc, cập nhật tồn và tính lại giá trong cùng transaction. IN, SALE, RETURN, ADJUST_IN, ADJUST_OUT và DAMAGE đã được dùng bởi luồng kho/bán và duyệt yêu cầu. Một lần bán hiện ghi một sản phẩm; lịch sử kho và bán có bộ lọc thời gian theo giờ Việt Nam và phân trang mặc định 20 dòng mỗi trang.
 
 - [x] Đã tích hợp phần kho/bán hàng vào `main` và kiểm thử chung với các phần còn lại.
 - [ ] Kiểm tra khóa và bán đồng thời bằng nhiều kết nối PostgreSQL thật. Kiểm thử PGlite hiện dùng một kết nối, chưa chứng minh hành vi này trên Supabase.
