@@ -366,6 +366,7 @@ select:focus-visible { outline-offset: -3px; }
   .records-table { font-size: 13px; }
   .records-table th, .records-table td { vertical-align: middle; }
   .records-table .num { text-align: right; }
+  .records-table .col-center { text-align: center; }
   .category-table { font-size: 13px; }
   .metrics-grid > .card:first-child { background: #eef6f2; border-color: #d6e6dc; }
 }
@@ -602,6 +603,10 @@ select:focus-visible { outline-offset: -3px; }
   gap: 6px;
   font-weight: 500;
   color: var(--color-accent);
+}
+.records-table td.col-center .btn-print-receipt {
+  justify-content: center;
+  margin: 0 auto;
 }
 .btn-print-receipt:hover {
   text-decoration: underline;
