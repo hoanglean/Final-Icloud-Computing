@@ -16,7 +16,7 @@ function categoriesPage(categories, session, { error = '', notice = '', name = '
       </details>
       <form method="post" action="/categories/${category.id}/status">
         ${csrf}<input type="hidden" name="active" value="${category.isActive ? 'false' : 'true'}">
-        <button class="category-text-button" type="submit" aria-label="${category.isActive ? 'Ngừng sử dụng' : 'Mở lại'} danh mục ${escape(category.name)}">${category.isActive ? 'Ngừng sử dụng' : 'Mở lại'}</button>
+        <button class="category-text-button" type="submit" data-confirm="Bạn có chắc chắn muốn ${category.isActive ? 'ngừng sử dụng' : 'mở lại'} danh mục &quot;${escape(category.name)}&quot; không?" aria-label="${category.isActive ? 'Ngừng sử dụng' : 'Mở lại'} danh mục ${escape(category.name)}">${category.isActive ? 'Ngừng sử dụng' : 'Mở lại'}</button>
       </form>
     </div></td>
   </tr>`).join('');

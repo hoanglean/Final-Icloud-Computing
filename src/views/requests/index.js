@@ -34,8 +34,8 @@ function requestsPage(rows, { isAdmin, session, notice = '' }) {
       <input type="hidden" name="csrf" value="${escape(session.csrf)}">
       <label class="category-sr-only" for="review-note-${row.id}">Ghi chú duyệt yêu cầu #${row.id}</label>
       <input id="review-note-${row.id}" name="review_note" maxlength="1000" placeholder="Ghi chú (không bắt buộc)">
-      <button class="button" type="submit" name="decision" value="approve">Duyệt</button>
-      <button class="button" type="submit" name="decision" value="reject">Từ chối</button>
+      <button class="button" type="submit" name="decision" value="approve" data-confirm="Bạn có chắc chắn muốn DUYỆT yêu cầu #${row.id} không? Thao tác này sẽ cập nhật tồn kho và giá bán.">Duyệt</button>
+      <button class="button button-danger" type="submit" name="decision" value="reject" data-confirm="Bạn có chắc chắn muốn TỪ CHỐI yêu cầu #${row.id} không?">Từ chối</button>
     </form>` : '';
     return `<tr>
       <th scope="row">#${row.id}<span class="category-id">${time(row.createdAt)}</span></th>

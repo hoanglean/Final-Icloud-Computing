@@ -1,8 +1,8 @@
 {
-  "name": "inventory-auth",
+  "name": "v-inventory",
   "version": "1.0.0",
   "private": true,
-  "description": "Quan ly kho va phan quyen voi PostgreSQL tren Supabase",
+  "description": "V-Inventory - Quan ly kho va dinh gia dong voi PostgreSQL",
   "scripts": {
     "start": "node src/server.js",
     "dev": "node --watch src/server.js",

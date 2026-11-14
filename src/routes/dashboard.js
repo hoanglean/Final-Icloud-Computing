@@ -21,7 +21,7 @@ function generateReportsCsv({ summary, byCategory, fluctuations, filters }) {
     : '0.0';
 
   const lines = [
-    `"BÁO CÁO KINH DOANH VÀ BIẾN ĐỘNG GIÁ - KHO VIỆT"`,
+    `"BÁO CÁO KINH DOANH VÀ BIẾN ĐỘNG GIÁ - V-INVENTORY"`,
     `"Kỳ báo cáo","${periodLabel}"`,
     `"Từ ngày","${filters.fromDate || 'Tất cả'}"`,
     `"Đến ngày","${filters.toDate || 'Tất cả'}"`,

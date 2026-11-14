@@ -47,9 +47,9 @@ async function createApp({ pool = createPool() } = {}) {
     securityHeaders(res);
     try {
       const url = new URL(req.url, 'http://localhost');
-      if (['/style.css', '/tokens.css', '/base.css'].includes(url.pathname) && req.method === 'GET') {
-        res.writeHead(200, { 'Content-Type': 'text/css; charset=utf-8' });
-        return res.end(fs.readFileSync(path.join(root, 'public/css', url.pathname.slice(1))));
+      if (['/style.css', '/tokens.css', '/base.css', '/app.js'].includes(url.pathname) && req.method === 'GET') {
+        res.writeHead(200, { 'Content-Type': url.pathname.endsWith('.js') ? 'application/javascript; charset=utf-8' : 'text/css; charset=utf-8' });
+        return res.end(fs.readFileSync(path.join(root, url.pathname.endsWith('.js') ? 'public/js/app.js' : 'public/css' + url.pathname)));
       }
       const users = await userRepository.all();
       const context = {

@@ -1,4 +1,4 @@
-# Kho Việt — Quản lý kho và định giá động
+# V-Inventory — Quản lý kho và định giá động
 
 Ứng dụng quản lý cửa hàng dùng Node.js 22 trở lên, giao diện HTML/CSS và PostgreSQL trên Supabase. Phần chính của cả bốn thành viên đã được tích hợp vào `main`: tài khoản, danh mục, sản phẩm/ảnh, kho/bán hàng, định giá, tổng quan/báo cáo và yêu cầu trả hàng/hàng hỏng.
 

@@ -343,7 +343,7 @@ test('dashboard and reports HTTP routes integration', async t => {
   await t.test('exports business report to CSV file ', async () => {
     const csvRes = await admin('/reports/export?period=all');
     assert.equal(csvRes.status, 200);
-        assert.ok(csvRes.text.includes('BÁO CÁO KINH DOANH VÀ BIẾN ĐỘNG GIÁ - KHO VIỆT'));
+        assert.ok(csvRes.text.includes('BÁO CÁO KINH DOANH VÀ BIẾN ĐỘNG GIÁ - V-INVENTORY'));
     assert.ok(csvRes.text.includes('Doanh thu thuần (Net Revenue)'));
   });
 });

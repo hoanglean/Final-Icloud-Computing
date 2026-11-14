@@ -12,7 +12,7 @@ function usersPage(users, current, session, { error = '', notice = '', values = 
       <form method="post" action="/users/${user.id}/access">${csrf}
         <label for="role-${user.id}">Vai trò</label><select id="role-${user.id}" name="role">${roles(user.role)}</select>
         <label for="active-${user.id}">Trạng thái</label><select id="active-${user.id}" name="active"><option value="true"${user.isActive ? ' selected' : ''}>Hoạt động</option><option value="false"${!user.isActive ? ' selected' : ''}${user.id === current.id ? ' disabled' : ''}>Đã khóa</option></select>
-        <button class="category-button" type="submit">Lưu thay đổi</button>
+        <button class="category-button" type="submit" data-confirm="Bạn có chắc chắn muốn lưu thay đổi quyền hoặc trạng thái của tài khoản &quot;${escape(user.name)}&quot; không?">Lưu thay đổi</button>
       </form></details></td>
   </tr>`).join('');
   return `<main class="workspace">
