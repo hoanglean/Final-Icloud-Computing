@@ -19,7 +19,7 @@ Cập nhật ngày **14/11/2026**. Các chức năng chính của bốn thành v
 | Nhập kho, kiểm kê | Admin nhập hàng, điều chỉnh tăng/giảm kèm lý do; kiểm tra tồn và cập nhật giá |
 | Cảnh báo tồn và lịch sử kho | Cả hai vai trò xem cảnh báo; admin xem lịch sử giao dịch kho |
 | Bán hàng và lịch sử bán | Nhân viên bán và xem lịch sử của mình; admin chỉ xem lịch sử bán của nhân viên |
-| Trả hàng, hàng hỏng và duyệt yêu cầu | Nhân viên gửi/theo dõi yêu cầu của mình; admin xem, duyệt hoặc từ chối; duyệt cập nhật tồn, giao dịch và giá trong cùng transaction |
+| Trả hàng, báo hàng hỏng / hết hạn và duyệt yêu cầu | Nhân viên gửi/theo dõi yêu cầu của mình; admin xem, duyệt hoặc từ chối; duyệt cập nhật tồn, giao dịch và giá trong cùng transaction |
 | Quy tắc giá và lịch sử giá | Admin thêm/sửa, bật/tắt, tính lại giá và tra cứu lịch sử theo sản phẩm |
 | Tổng quan và báo cáo | Tổng tồn, cảnh báo, doanh thu thuần SALE trừ RETURN; lọc theo ngày Việt Nam, tổng hợp theo danh mục và biến động giá |
 | Triển khai Render | Chưa triển khai công khai |
@@ -100,7 +100,9 @@ Admin vào **Sản phẩm → Thêm sản phẩm/Sửa sản phẩm → Ảnh s�
 - Nhân viên vào **Bán hàng**, chọn sản phẩm và số lượng. Mỗi lần gửi ghi nhận một sản phẩm; không phải giỏ hàng nhiều sản phẩm. Máy chủ lấy giá hiện tại và kiểm tra tồn, không tin đơn giá từ trình duyệt.
 - Giao dịch bán lưu giá trước khi trừ tồn; giá tính lại sau giao dịch áp dụng cho lần bán tiếp theo. Lỗi ghi lịch sử hoặc tính giá sẽ hoàn tác cả thay đổi tồn.
 - Lịch sử kho, lịch sử bán cá nhân và lịch sử bán của nhân viên dành cho admin hiển thị 20 dòng mỗi trang theo mặc định. Chọn **Hôm nay**, **Hôm qua**, **7 ngày qua** hoặc **Tháng này** theo giờ Việt Nam rồi bấm **Áp dụng**. Các nút chuyển trang giữ bộ lọc đã chọn. Cảnh báo tồn thấp dùng ngưỡng `low_stock` của quy tắc sản phẩm, mặc định 10 khi chưa có quy tắc; trạng thái bật/tắt quy tắc giá hiện không thay đổi ngưỡng cảnh báo này.
-- Nhân viên và admin gửi yêu cầu tại **Yêu cầu trả hàng/Báo hàng hỏng**; admin xử lý tại **Duyệt yêu cầu**. Gửi hoặc từ chối chưa đổi tồn; chỉ duyệt mới tạo giao dịch kho. Lý do hỗ trợ nhiều dòng, tối đa 1000 ký tự.
+- **Yêu cầu trả hàng** — Nhân viên chọn từ danh sách giao dịch của mình còn có thể trả, rồi nhập số lượng và lý do.
+- **Báo hàng hỏng / hết hạn** — Nhân viên chọn sản phẩm từ danh sách có số tồn hiện tại, chọn tình trạng rồi nhập số lượng và lý do.
+- **Duyệt yêu cầu** — Admin duyệt hoặc từ chối. Khi duyệt, hệ thống cộng lại hàng trả hoặc trừ số hàng hỏng, hết hạn và ghi giao dịch vào lịch sử kho.
 - Giao dịch bán cũ vẫn được trả khi sản phẩm đã ngừng kinh doanh. Yêu cầu hàng hỏng đã gửi trước khi ngừng bán cũng duyệt được nếu còn đủ tồn. Xử lý yêu cầu không tự mở bán lại sản phẩm; tạo mới yêu cầu hàng hỏng vẫn chỉ chọn sản phẩm đang kinh doanh.
 
 ## Định giá và báo cáo
