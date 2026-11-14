@@ -284,6 +284,32 @@ test('integrated inventory and sales through authenticated HTTP and PostgreSQL',
         await db.exec('ROLLBACK');
       }
     });
+    await t.test('records multiple products together and rolls back the entire sale when a later product lacks stock', async () => {
+      await reset();
+      const products = async () => (await db.query('SELECT id, stock, current_price FROM products ORDER BY id')).rows;
+      const before = await products();
+      const movements = await count('stock_movements');
+      const prices = await count('price_history');
+      assert.equal((await staff('/sales', { csrf: staffCsrf, quantity_1: '', quantity_2: '' })).status, 400);
+      const failed = await staff('/sales', { csrf: staffCsrf, quantity_1: '2', quantity_2: '101' });
+      assert.equal(failed.status, 409);
+      assert.match(failed.text, /name="quantity_1"[^>]*value="2"/);
+      assert.deepEqual(await products(), before);
+      assert.equal(await count('stock_movements'), movements);
+      assert.equal(await count('price_history'), prices);
+
+      const saved = await staff('/sales', { csrf: staffCsrf, quantity_2: '3', quantity_1: '2' });
+      assert.equal(saved.location, '/sales/history?saved=sold');
+      const after = await products();
+      assert.equal(after[0].stock, before[0].stock - 2);
+      assert.equal(after[1].stock, before[1].stock - 3);
+      const recorded = (await db.query("SELECT product_id, quantity, unit_price, user_id FROM stock_movements WHERE type = 'SALE' ORDER BY id DESC LIMIT 2")).rows;
+      assert.deepEqual(recorded, [
+        { product_id: 2, quantity: 3, unit_price: before[1].current_price, user_id: 2 },
+        { product_id: 1, quantity: 2, unit_price: before[0].current_price, user_id: 2 }
+      ]);
+    });
+
 
   } finally {
     if (server) { server.closeAllConnections(); await new Promise(resolve => server.close(resolve)); }

@@ -643,3 +643,29 @@ a.history-page-link:hover { background: var(--color-accent-soft); }
   .overview-metrics { grid-template-columns: minmax(0, 1fr); }
   .overview-workspace .page-title { padding-bottom: 0; }
 }
+
+/* Multi-product sales */
+.sale-form { display: grid; grid-template-columns: minmax(0, 1fr) minmax(220px, 280px); gap: 20px; align-items: start; }
+.sale-catalog, .sale-summary { min-width: 0; }
+.sale-summary { position: sticky; top: 88px; display: grid; gap: 14px; }
+.sale-summary .button { width: 100%; }
+.sale-selected-products { margin: 8px 0 0; padding: 0; list-style: none; max-height: 170px; overflow: auto; font-size: 13px; overflow-wrap: anywhere; }
+.sale-selected-products li + li { margin-top: 6px; }
+.sale-total { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px 12px; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--color-rule); }
+.sale-total strong { color: var(--color-accent-hover); overflow-wrap: anywhere; }
+.sale-products { margin: 0; padding: 0; list-style: none; }
+.sale-columns, .sale-product { display: grid; grid-template-columns: minmax(0, 1fr) minmax(95px, .43fr) 82px; align-items: center; gap: 12px; }
+.sale-columns { margin-top: 16px; padding-block: 9px; font-size: 12px; color: var(--color-muted); }
+.sale-product { padding-block: 12px; border-top: 1px solid var(--color-rule); font-size: 13px; overflow-wrap: anywhere; }
+.sale-product .product-thumbnail, .sale-product .product-no-image { width: 48px; height: 48px; background: var(--color-paper); }
+.sale-product .product-no-image { font-size: 9px; padding: 3px; }
+.sale-product-id { display: block; }
+.sale-product input { padding-inline: 8px; font-size: 14px; }
+@media (max-width: 960px) {
+  .sale-form { grid-template-columns: minmax(0, 1fr); }
+  .sale-summary { position: static; }
+}
+@media (max-width: 480px) {
+  .sale-columns, .sale-product { grid-template-columns: minmax(0, 1fr) minmax(74px, .55fr) 58px; gap: 8px; }
+  .sale-product .product-thumbnail, .sale-product .product-no-image { display: none; }
+}

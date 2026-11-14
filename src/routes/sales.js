@@ -2,7 +2,9 @@ const { historyOptions, historyDateRange, loadHistory } = require('../utils/hist
 const { readForm, redirect, send, json } = require('../utils/http');
 const { transaction } = require('../utils/transaction');
 const { applyStockChange } = require('../services/inventory');
-const { stockFormPage, movementHistoryPage } = require('../views/stock');
+const { invalid, recordId } = require('../utils/validation');
+const { movementHistoryPage } = require('../views/stock');
+const { salePage } = require('../views/stock/sale');
 
 async function salesRoutes(req, res, { url, user, session, pool, productRepository, inventoryRepository }) {
   if (!['/sales', '/sales/history', '/admin/sales-history'].includes(url.pathname)) return false;
@@ -14,7 +16,7 @@ async function salesRoutes(req, res, { url, user, session, pool, productReposito
     res.setHeader('Allow', url.pathname === '/sales' ? 'GET, POST' : 'GET');
     return respond('<main class="workspace"><h1>Phương thức không được hỗ trợ.</h1></main>', 405);
   }
-  const renderForm = async (values = {}, error = '', status = 200) => respond(stockFormPage(await productRepository.list({ status: 'active' }), session, { mode: 'sale', values, error }), status);
+  const renderForm = async (quantities = {}, error = '', status = 200) => respond(salePage(await productRepository.list({ status: 'active' }), session, { quantities, error }), status);
   if (req.method === 'GET') {
     if (url.pathname === '/sales') return renderForm();
     const wantsJson = req.headers.accept?.includes('application/json');
@@ -32,12 +34,33 @@ async function salesRoutes(req, res, { url, user, session, pool, productReposito
   }
   if (!(req.headers['content-type'] || '').toLowerCase().startsWith('application/x-www-form-urlencoded')) return renderForm({}, 'Biểu mẫu không được hỗ trợ.', 415);
   const form = await readForm(req);
-  if (!form.csrf || form.csrf !== session.csrf) return renderForm(form, 'Phiên biểu mẫu không hợp lệ. Hãy tải lại trang và thử lại.', 403);
+  const quantities = Object.fromEntries(Object.entries(form).filter(([key]) => key.startsWith('quantity_')));
+  const singleProduct = 'product_id' in form && !Object.keys(quantities).length;
+  if (singleProduct) quantities[`quantity_${form.product_id}`] = form.quantity;
+  if (!form.csrf || form.csrf !== session.csrf) return renderForm(quantities, 'Phiên biểu mẫu không hợp lệ. Hãy tải lại trang và thử lại.', 403);
   try {
-    await transaction(pool, client => applyStockChange(client, form.product_id, 'SALE', form.quantity, user.id));
+    const lines = [];
+    for (const [key, quantity] of Object.entries(quantities)) {
+      if (quantity === '' && !singleProduct) continue;
+      const id = recordId(key.slice('quantity_'.length), 'Mã sản phẩm');
+      lines.push({ id, quantity: recordId(quantity, 'Số lượng') });
+    }
+    if (!lines.length) invalid('Hãy nhập số lượng cho ít nhất một sản phẩm.');
+    // Lock products in the same order when sales overlap.
+    lines.sort((a, b) => a.id - b.id);
+    await transaction(pool, async client => {
+      for (const { id, quantity } of lines) {
+        try {
+          await applyStockChange(client, id, 'SALE', quantity, user.id);
+        } catch (error) {
+          if (error.status === 404 || error.status === 409) invalid(`Sản phẩm ID ${id}: ${error.message}`, error.status);
+          throw error;
+        }
+      }
+    });
     return redirect(res, '/sales/history?saved=sold');
   } catch (error) {
-    if (error.status) return renderForm(form, error.message, error.status);
+    if (error.status) return renderForm(quantities, error.message, error.status);
     throw error;
   }
 }
