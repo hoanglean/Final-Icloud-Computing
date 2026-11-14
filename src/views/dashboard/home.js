@@ -22,16 +22,14 @@ function revenueChart(categories) {
   const values = shown.map(row => Number(row.netRevenue));
   const min = Math.min(0, ...values), max = Math.max(0, ...values);
   const span = max - min || 1;
-  const x = value => 178 + (value - min) / span * 360;
+  const x = value => (value - min) / span * 360;
   const zero = x(0);
-  const height = 52 + shown.length * 46;
   const compact = value => new Intl.NumberFormat('vi-VN', { notation: 'compact', maximumFractionDigits: 1 }).format(value);
   const bars = shown.map((row, index) => {
-    const value = values[index], y = 34 + index * 46;
-    const label = [...row.categoryName].length > 25 ? [...row.categoryName].slice(0, 24).join('') + '…' : row.categoryName;
-    return `<g><title>${escape(row.categoryName)}: ${money(row.netRevenue)}</title><text class="chart-category" x="0" y="${y + 15}">${escape(label)}</text>${value === 0 ? `<circle class="chart-bar" cx="${zero.toFixed(2)}" cy="${y + 11}" r="3"></circle>` : `<rect class="chart-bar${value < 0 ? ' chart-bar-negative' : ''}" x="${Math.min(x(value), zero).toFixed(2)}" y="${y}" width="${Math.abs(x(value) - zero).toFixed(2)}" height="22" rx="4"></rect>`}<text class="chart-amount" x="694" y="${y + 15}" text-anchor="end">${money(row.netRevenue)}</text></g>`;
+    const value = values[index];
+    return `<li><div class="chart-label"><span>${escape(row.categoryName)}</span><strong>${money(row.netRevenue)}</strong></div><svg viewBox="0 0 360 12" preserveAspectRatio="none" aria-hidden="true"><rect class="chart-track" width="360" height="12" rx="3"></rect><line class="chart-zero-line" x1="${zero}" x2="${zero}" y1="0" y2="12"></line>${value === 0 ? `<rect class="chart-bar" x="${Math.min(zero, 358)}" width="2" height="12" rx="1"></rect>` : `<rect class="chart-bar${value < 0 ? ' chart-bar-negative' : ''}" x="${Math.min(x(value), zero)}" width="${Math.abs(x(value) - zero)}" height="12" rx="3"></rect>`}</svg></li>`;
   }).join('');
-  return `<div class="overview-chart"><svg viewBox="0 0 700 ${height}" role="img" aria-label="Doanh thu thuần theo danh mục, tính từ toàn bộ giao dịch bán và trả hàng"><line class="chart-grid-line" x1="178" y1="25" x2="178" y2="${height - 26}"></line><line class="chart-grid-line" x1="358" y1="25" x2="358" y2="${height - 26}"></line><line class="chart-grid-line" x1="538" y1="25" x2="538" y2="${height - 26}"></line><line class="chart-zero-line" x1="${zero.toFixed(2)}" y1="25" x2="${zero.toFixed(2)}" y2="${height - 26}"></line>${bars}<text class="chart-axis" x="178" y="${height - 4}">${compact(min)}</text><text class="chart-axis" x="538" y="${height - 4}" text-anchor="end">${compact(max)}</text><text class="chart-axis" x="694" y="${height - 4}" text-anchor="end">Đơn vị: đồng</text></svg></div>
+  return `<div class="overview-chart"><ul class="chart-bars" role="list" aria-label="Doanh thu thuần theo danh mục">${bars}</ul><div class="chart-axis" aria-hidden="true"><span>${compact(min)}</span><span>Đơn vị: đồng</span><span>${compact(max)}</span></div></div>
     <p class="chart-caption">${categories.length > 6 ? '6 danh mục có doanh thu thuần cao nhất. ' : ''}Doanh thu thuần = doanh số bán − giá trị hàng trả.</p>
     <details class="chart-data"><summary>Xem số liệu chi tiết</summary><div class="table-scroll"><table class="records-table"><caption class="category-sr-only">Doanh thu theo toàn bộ danh mục</caption><thead><tr><th>Danh mục</th><th class="num">Doanh số bán</th><th class="num">Hàng trả</th><th class="num">Doanh thu thuần</th></tr></thead><tbody>${categories.map(row => `<tr><th scope="row">${escape(row.categoryName)}</th><td class="num" data-label="Doanh số bán">${money(row.grossSales)}</td><td class="num" data-label="Hàng trả">${money(row.returns)}</td><td class="num" data-label="Doanh thu thuần">${money(row.netRevenue)}</td></tr>`).join('')}</tbody></table></div></details>`;
 }

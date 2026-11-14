@@ -50,7 +50,8 @@ function productForm(values, categories, session, { error = '' } = {}) {
       <div><label for="product-base-price">Giá cơ sở (đồng)</label><input id="product-base-price" name="basePrice" type="number" min="0" max="999999999999.99" step="0.01" value="${escape(values.basePrice ?? '')}" required inputmode="decimal" aria-describedby="price-hint"><p class="small" id="price-hint">Giá bán được tính lại theo quy tắc đang áp dụng khi giá cơ sở đổi.</p></div>
       <div class="form-wide product-image-field">
         ${values.hasImage ? `<img class="product-current-image" src="/products/${values.id}/image" alt="Ảnh hiện tại của ${escape(values.name || 'sản phẩm')}" width="160" height="160">` : ''}
-        <label for="product-image">Ảnh sản phẩm</label><input id="product-image" class="image-file-input" name="image" type="file" accept="image/jpeg,image/png,image/webp" aria-describedby="image-hint">
+        <label for="product-image">Ảnh sản phẩm</label>
+        <div class="image-picker"><span class="image-picker-control"><span aria-hidden="true">Chọn ảnh</span><input id="product-image" name="image" type="file" accept="image/jpeg,image/png,image/webp" aria-describedby="image-hint"></span><span id="product-image-name" role="status">Chưa chọn ảnh</span></div>
         <p class="small" id="image-hint">JPG, PNG hoặc WebP, tối đa 2 MB. ${values.hasImage ? 'Để trống để giữ ảnh hiện tại.' : 'Có thể bổ sung ảnh sau.'}</p>
         ${values.hasImage ? '<label class="image-remove" for="product-remove-image"><input id="product-remove-image" type="checkbox" name="removeImage" value="true">Gỡ ảnh hiện tại</label>' : ''}
       </div>

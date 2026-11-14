@@ -1,70 +1,48 @@
 // V-Inventory - Client-side interactions
 document.addEventListener('DOMContentLoaded', () => {
-  // 1. Safe Confirmation Dialog (Hộp thoại an toàn)
   const confirmModal = document.getElementById('confirm-modal');
   const confirmMsg = document.getElementById('confirm-modal-message');
   const confirmCancel = document.getElementById('confirm-modal-cancel');
   const confirmOk = document.getElementById('confirm-modal-ok');
-  let pendingForm = null;
-  let pendingSubmitter = null;
+  let pendingSubmitter;
 
-  document.addEventListener('click', (e) => {
-    const trigger = e.target.closest('[data-confirm]');
-    if (!trigger) return;
+  document.addEventListener('click', event => {
+    const trigger = event.target.closest('button[type="submit"][data-confirm]');
+    if (!trigger?.form) return;
 
-    e.preventDefault();
-    const message = trigger.getAttribute('data-confirm') || 'Bạn có chắc chắn muốn thực hiện thao tác này?';
-    if (confirmMsg) confirmMsg.textContent = message;
-
-    if (trigger.tagName === 'BUTTON' && trigger.type === 'submit' && trigger.form) {
-      pendingForm = trigger.form;
-      pendingSubmitter = trigger;
-    } else if (trigger.tagName === 'FORM') {
-      pendingForm = trigger;
-      pendingSubmitter = null;
-    } else {
-      pendingForm = null;
-      pendingSubmitter = null;
-    }
-
-    if (confirmModal) {
-      confirmModal.removeAttribute('hidden');
-    }
+    event.preventDefault();
+    if (!trigger.form.reportValidity()) return;
+    pendingSubmitter = trigger;
+    confirmMsg.textContent = trigger.dataset.confirm;
+    trigger.focus();
+    confirmModal.showModal();
   });
 
-  const closeConfirmModal = () => {
-    if (confirmModal) {
-      confirmModal.setAttribute('hidden', '');
-      pendingForm = null;
-      pendingSubmitter = null;
-    }
-  };
+  confirmCancel.addEventListener('click', () => confirmModal.close());
+  confirmOk.addEventListener('click', () => {
+    confirmModal.close();
+    pendingSubmitter.form.requestSubmit(pendingSubmitter);
+  });
+  confirmModal.addEventListener('click', event => {
+    if (event.target !== confirmModal) return;
+    const bounds = confirmModal.getBoundingClientRect();
+    if (event.clientX < bounds.left || event.clientX > bounds.right ||
+        event.clientY < bounds.top || event.clientY > bounds.bottom) confirmModal.close();
+  });
+  confirmModal.addEventListener('keydown', event => {
+    if (event.key !== 'Tab') return;
+    const last = event.shiftKey ? confirmCancel : confirmOk;
+    if (document.activeElement !== last) return;
 
-  if (confirmCancel) confirmCancel.addEventListener('click', closeConfirmModal);
+    event.preventDefault();
+    (event.shiftKey ? confirmOk : confirmCancel).focus();
+  });
 
-  if (confirmOk) {
-    confirmOk.addEventListener('click', () => {
-      const formToSubmit = pendingForm;
-      const submitter = pendingSubmitter;
-      closeConfirmModal();
-
-      if (formToSubmit) {
-        if (submitter && submitter.name) {
-          const hiddenInput = document.createElement('input');
-          hiddenInput.type = 'hidden';
-          hiddenInput.name = submitter.name;
-          hiddenInput.value = submitter.value;
-          formToSubmit.appendChild(hiddenInput);
-        }
-        formToSubmit.submit();
-      }
+  const productImage = document.getElementById('product-image');
+  if (productImage) {
+    const fileName = document.getElementById('product-image-name');
+    productImage.addEventListener('change', () => {
+      fileName.textContent = productImage.files[0]?.name || 'Chưa chọn ảnh';
     });
   }
-
-  document.addEventListener('click', (event) => {
-    if (event.target === confirmModal) closeConfirmModal();
-  });
-  document.addEventListener('keydown', (event) => {
-    if (event.key === 'Escape') closeConfirmModal();
-  });
 });
