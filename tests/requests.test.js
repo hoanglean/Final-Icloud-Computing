@@ -76,13 +76,11 @@ test('return and damaged-stock requests through authenticated HTTP and PostgreSQ
     let returnRequestId, rejectedDamageId, damageRequestId, concurrentDamageId, insufficientDamageId;
 
     await t.test('renders member-specific forms and protects every request route', async () => {
-      for (const request of [admin, staff]) {
-        assert.equal((await request('/requests/return')).status, 200);
-        assert.equal((await request('/requests/damage')).status, 200);
-      }
+      assert.equal((await staff('/requests/damage')).status, 200);
+      assert.equal((await admin('/requests/damage')).status, 403);
       assert.equal((await staff('/requests/return')).text.includes(`value="${sale.id}"`), true);
       assert.equal((await staff('/requests/return')).text.includes(`value="${otherSale.id}"`), false);
-      assert.equal((await admin('/requests/return')).text.includes(`value="${otherSale.id}"`), true);
+      assert.equal((await admin('/requests/return')).status, 403);
       for (const path of ['/requests', '/requests/return', '/requests/damage', `/requests/${sale.id}/review`]) {
         assert.equal((await guest(path)).location, '/login');
       }
@@ -90,7 +88,7 @@ test('return and damaged-stock requests through authenticated HTTP and PostgreSQ
       assert.equal((await admin(`/requests/${sale.id}/review`)).status, 405);
       assert.equal((await admin(`/requests/${sale.id}/review`)).allow, 'POST');
       assert.equal((await admin('/requests', { csrf: adminCsrf })).status, 405);
-      assert.equal((await admin('/requests/damage', { csrf: adminCsrf }, { headers: { 'content-type': 'application/json' } })).status, 415);
+      assert.equal((await admin('/requests/damage', { csrf: adminCsrf, product_id: '1', quantity: '1', reason: 'Admin report' })).status, 403);
     });
 
     await t.test('submits pending returns with ownership and quantity reservations without changing stock', async () => {
@@ -155,16 +153,11 @@ test('return and damaged-stock requests through authenticated HTTP and PostgreSQ
       assert.equal((await approve(admin, adminCsrf, returnRequestId)).status, 409);
     });
 
-    await t.test('allows an admin to submit a return request for an employee sale', async () => {
-      const beforeStock = await stock(2);
-      const created = await admin('/requests/return', { csrf: adminCsrf, sale_id: String(otherSale.id), quantity: '1', reason: 'Admin-assisted return' });
-      assert.equal(created.status, 303);
-      const row = (await db.query("SELECT * FROM stock_requests WHERE related_movement_id=$1 ORDER BY id DESC LIMIT 1", [otherSale.id])).rows[0];
-      assert.equal(row.requested_by, 1);
-      assert.equal(row.status, 'PENDING');
-      assert.equal(await stock(2), beforeStock);
-      assert.equal((await reject(admin, adminCsrf, row.id)).status, 303);
-      assert.equal(await stock(2), beforeStock);
+    await t.test('blocks admins from submitting returns through a direct request', async () => {
+      const beforeRequests = await count('stock_requests');
+      const response = await admin('/requests/return', { csrf: adminCsrf, sale_id: String(otherSale.id), quantity: '1', reason: 'Return request' });
+      assert.equal(response.status, 403);
+      assert.equal(await count('stock_requests'), beforeRequests);
     });
 
     await t.test('rejects damage without changing stock or creating a movement', async () => {

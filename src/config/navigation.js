@@ -14,8 +14,8 @@ const navigation = [
     { path: '/sales/history', label: 'Lịch sử bán của tôi', icon: 'history', staffOnly: true, description: 'Tra cứu các giao dịch bán hàng do bạn thực hiện.' }
   ] },
   { title: 'Trả hàng và hàng hỏng', items: [
-    { path: '/requests/return', label: 'Yêu cầu trả hàng', icon: 'return', description: 'Gửi yêu cầu trả hàng từ giao dịch bán gốc để quản trị viên xem xét.' },
-    { path: '/requests/damage', label: 'Báo hàng hỏng', icon: 'alert', description: 'Gửi yêu cầu xử lý hàng hỏng, kèm số lượng và lý do.' },
+    { path: '/requests/return', label: 'Yêu cầu trả hàng', icon: 'return', staffOnly: true, description: 'Gửi yêu cầu trả hàng từ giao dịch bán gốc để quản trị viên xem xét.' },
+    { path: '/requests/damage', label: 'Báo hàng hỏng / hết hạn', icon: 'alert', staffOnly: true, description: 'Gửi yêu cầu xử lý hàng hỏng, kèm số lượng và lý do.' },
     { path: '/requests', label: 'Yêu cầu của tôi', adminLabel: 'Duyệt yêu cầu', icon: 'check', description: 'Theo dõi trạng thái các yêu cầu trả hàng và hàng hỏng của bạn.', adminDescription: 'Xem toàn bộ yêu cầu trả hàng và hàng hỏng để duyệt hoặc từ chối.' }
   ] },
   { title: 'Quản trị', items: [

@@ -38,6 +38,30 @@ document.addEventListener('DOMContentLoaded', () => {
     (event.shiftKey ? confirmOk : confirmCancel).focus();
   });
 
+  const stockSearch = document.getElementById('stock-query');
+  if (stockSearch) {
+    const rows = [...document.querySelectorAll('[data-stock-id]')];
+    const empty = document.getElementById('stock-picker-empty');
+    const filter = () => {
+      const query = stockSearch.value.trim().toLowerCase();
+      for (const row of rows) {
+        row.hidden = !row.querySelector('.stock-picker-name').textContent.toLowerCase().includes(query)
+          && !row.dataset.stockId.includes(query) && !row.querySelector('input').checked;
+      }
+      empty.hidden = rows.some(row => !row.hidden);
+    };
+    document.getElementById('stock-picker-search').hidden = false;
+    stockSearch.addEventListener('input', filter);
+    stockSearch.addEventListener('keydown', event => {
+      if (event.key === 'Enter' && !event.isComposing) event.preventDefault();
+    });
+    stockSearch.form.addEventListener('invalid', event => {
+      if (!event.target.closest('.stock-picker-row')) return;
+      stockSearch.value = '';
+      filter();
+    }, true);
+  }
+
   const saleForm = document.getElementById('sale-form');
   if (saleForm) setupSaleForm(saleForm);
 

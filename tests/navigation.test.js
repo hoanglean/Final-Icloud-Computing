@@ -40,7 +40,11 @@ test('admin menu links work and highlight only the selected page', () => {
   const page = visit('/admin', admin);
   assert.ok(page.html.includes('Duyệt yêu cầu'));
   const links = [...page.html.matchAll(/class="sidebar-link[^"]*" href="([^"]+)"/g)];
-  assert.equal(links.length, 15);
+  assert.equal(links.length, 13);
+  assert.ok(!links.some(([, path]) => path === '/requests/return'));
+  assert.equal(visit('/requests/return', admin).status, 403);
+  assert.ok(!links.some(([, path]) => path === '/requests/damage'));
+  assert.equal(visit('/requests/damage', admin).status, 403);
   for (const [, path] of links) {
     const destination = visit(path, admin);
     assert.equal(destination.status, 200, path);

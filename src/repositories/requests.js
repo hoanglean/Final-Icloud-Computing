@@ -15,14 +15,14 @@ function createRequestRepository(pool) {
     },
 
     async activeProducts() {
-      const { rows } = await pool.query(`SELECT id, name, stock FROM public.products
+      const { rows } = await pool.query(`SELECT id, name, stock, (image_data IS NOT NULL) AS "hasImage" FROM public.products
         WHERE is_active = true ORDER BY lower(name), id`);
       return rows;
     },
 
-    async returnableSales({ userId = null } = {}) {
+    async returnableSales({ userId }) {
       const { rows } = await pool.query(`SELECT s.id AS "saleId", s.product_id AS "productId", p.name AS "productName",
-        s.created_at AS "createdAt",
+        s.created_at AS "createdAt", (p.image_data IS NOT NULL AND p.is_active) AS "hasImage",
         s.quantity - COALESCE(returned.quantity, 0) - COALESCE(pending.quantity, 0) AS remaining
         FROM public.stock_movements s
         JOIN public.products p ON p.id = s.product_id
@@ -34,7 +34,7 @@ function createRequestRepository(pool) {
           SELECT related_movement_id, sum(quantity) AS quantity
           FROM public.stock_requests WHERE type = 'RETURN' AND status = 'PENDING' GROUP BY related_movement_id
         ) pending ON pending.related_movement_id = s.id
-        WHERE s.type = 'SALE' AND ($1::integer IS NULL OR s.user_id = $1)
+        WHERE s.type = 'SALE' AND s.user_id = $1
           AND s.quantity - COALESCE(returned.quantity, 0) - COALESCE(pending.quantity, 0) > 0
         ORDER BY s.created_at DESC, s.id DESC`, [userId]);
       return rows;
@@ -47,7 +47,7 @@ function createRequestRepository(pool) {
       return rows[0];
     },
 
-    async createReturn(client, { saleId, quantity, reason, requestedBy, role }) {
+    async createReturn(client, { saleId, quantity, reason, requestedBy }) {
       // Match inventory's product-before-sale lock order when approvals run concurrently.
       await client.query(`SELECT id FROM public.products WHERE id = (
         SELECT product_id FROM public.stock_movements WHERE id = $1 AND type = 'SALE'
@@ -55,7 +55,7 @@ function createRequestRepository(pool) {
       const sale = (await client.query(`SELECT id, product_id AS "productId", quantity, user_id AS "userId"
         FROM public.stock_movements WHERE id = $1 AND type = 'SALE' FOR UPDATE`, [saleId])).rows[0];
       if (!sale) return null;
-      if (role === 'staff' && sale.userId !== requestedBy) return { forbidden: true };
+      if (sale.userId !== requestedBy) return { forbidden: true };
 
       const totals = (await client.query(`SELECT
         (SELECT COALESCE(sum(quantity), 0) FROM public.stock_movements WHERE type = 'RETURN' AND related_movement_id = $1) AS returned,

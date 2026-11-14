@@ -1,12 +1,12 @@
 const { invalid, recordId, text } = require('../utils/validation');
 const { applyStockChange } = require('./inventory');
 
-async function createReturnRequest(client, repository, { saleId, quantity, reason, requestedBy, role }) {
+async function createReturnRequest(client, repository, { saleId, quantity, reason, requestedBy }) {
   saleId = recordId(saleId, 'Giao dịch bán');
   quantity = recordId(quantity, 'Số lượng');
   reason = text(reason, 'Lý do', 1000, { multiline: true });
   requestedBy = recordId(requestedBy, 'Tài khoản');
-  const result = await repository.createReturn(client, { saleId, quantity, reason, requestedBy, role });
+  const result = await repository.createReturn(client, { saleId, quantity, reason, requestedBy });
   if (!result) invalid('Giao dịch bán không tồn tại.', 404);
   if (result.forbidden) invalid('Bạn chỉ được yêu cầu trả hàng từ giao dịch bán của mình.', 403);
   if (result.exceedsLimit) invalid('Tổng số lượng yêu cầu trả vượt số lượng còn có thể trả.', 409);

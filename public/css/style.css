@@ -669,3 +669,12 @@ a.history-page-link:hover { background: var(--color-accent-soft); }
   .sale-columns, .sale-product { grid-template-columns: minmax(0, 1fr) minmax(74px, .55fr) 58px; gap: 8px; }
   .sale-product .product-thumbnail, .sale-product .product-no-image { display: none; }
 }
+
+.stock-picker { min-width: 0; margin: 0; padding: 0; border: 0; }
+.stock-picker legend { margin-bottom: 10px; font-weight: 600; }
+.stock-picker-list { max-height: 360px; overflow: auto; margin-top: 12px; border: 1px solid var(--color-rule); border-radius: var(--radius-control); }
+.stock-picker-row { display: grid; grid-template-columns: 18px 40px minmax(0, 1fr) auto; gap: 10px; align-items: center; margin: 0; padding: 10px 12px; cursor: pointer; overflow-wrap: anywhere; }
+.stock-picker-row + .stock-picker-row { border-top: 1px solid var(--color-rule); }
+.stock-picker-row:has(input:checked) { background: var(--color-accent-soft); }
+.stock-picker-row input { width: 18px; height: 18px; margin: 0; accent-color: var(--color-accent); }
+.stock-picker-row .product-thumbnail, .stock-picker-row .product-no-image { width: 40px; height: 40px; background: var(--color-paper); font-size: 9px; padding: 2px; }
