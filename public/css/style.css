@@ -678,3 +678,37 @@ a.history-page-link:hover { background: var(--color-accent-soft); }
 .stock-picker-row:has(input:checked) { background: var(--color-accent-soft); }
 .stock-picker-row input { width: 18px; height: 18px; margin: 0; accent-color: var(--color-accent); }
 .stock-picker-row .product-thumbnail, .stock-picker-row .product-no-image { width: 40px; height: 40px; background: var(--color-paper); font-size: 9px; padding: 2px; }
+
+/* TopRepo-inspired layout in the V-Inventory palette */
+.signed-in {
+  --color-paper: #f3f7f5;
+  --radius-card: 16px;
+  --radius-control: 9px;
+}
+.signed-in .app-header { background: var(--color-surface); }
+.signed-in .app-content > .workspace > .page-title {
+  flex-wrap: wrap;
+  gap: 16px;
+  padding: clamp(16px, 2.2vw, 28px);
+  border: 1px solid var(--color-rule);
+  border-radius: var(--radius-card);
+  background: radial-gradient(ellipse at top right, #e4f4ea, transparent 70%), var(--color-surface);
+}
+.signed-in .app-content > .workspace > .page-title h1 { color: #18543f; }
+.signed-in :is(.product-ledger, .history-card, .card, .overview-panel) {
+  border-radius: var(--radius-card);
+}
+.signed-in :is(.history-filters, .product-filters) { background: #f4f8f5; }
+.signed-in .product-filters {
+  margin: 0 16px 8px;
+  padding: 14px 16px;
+  border: 1px solid var(--color-rule);
+  border-radius: var(--radius-control);
+}
+.signed-in .records-table thead th { background: #eaf3ed; color: #405e4e; }
+.signed-in .records-table tbody tr:hover { background: #f4faf6; }
+.signed-in :is(.category-status, .stock-count, .result-count) { border-radius: 999px; }
+.signed-in .overview-metric.featured {
+  background: linear-gradient(145deg, #ebf7ef, #fff);
+  border-color: #bfdcc9;
+}
