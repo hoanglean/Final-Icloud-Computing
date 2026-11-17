@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: kho-viet
+    name: v-inventory
     runtime: node
     plan: free
     region: singapore
