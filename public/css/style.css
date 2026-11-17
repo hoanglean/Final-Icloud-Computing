@@ -766,3 +766,14 @@ a.history-page-link:hover { background: var(--color-accent-soft); }
   background-color: var(--color-accent-soft);
   border-radius: var(--radius-control);
 }
+
+.picker-form .stock-picker legend, .picker-form .picker-fields h2 {
+  padding: 0;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 24px;
+}
+.picker-form .stock-picker legend { margin-bottom: 14px; }
+.picker-form .picker-fields { gap: 14px; }
+.low-stock-image { flex: none; border-radius: var(--radius-control); }
+.low-stock-image .product-thumbnail { width: 44px; height: 44px; }
