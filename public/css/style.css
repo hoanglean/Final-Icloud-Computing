@@ -712,3 +712,26 @@ a.history-page-link:hover { background: var(--color-accent-soft); }
   background: linear-gradient(145deg, #ebf7ef, #fff);
   border-color: #bfdcc9;
 }
+
+/* Keep work pages compact and reserve the larger header for the overview. */
+.signed-in .app-content > .workspace:not(.overview-workspace) > .page-title {
+  padding: 0 0 14px;
+  border: 0;
+  border-bottom: 1px solid var(--color-rule);
+  border-radius: 0;
+  background: none;
+  margin-bottom: 20px;
+}
+.signed-in .product-table tbody :is(th, td) { padding-block: 9px; }
+.product-actions details summary { width: fit-content; color: var(--color-muted); font-size: 13px; }
+.product-actions details form { margin-top: 2px; }
+.product-actions .text-link, .product-actions .category-text-button { font-size: 13px; }
+.signed-in .product-filters label, .signed-in .records-table thead th { font-size: 13px; }
+.product-filters :is(input, select, .button, .text-link) { font-size: 13px; }
+.management-form.picker-form { max-width: none; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); }
+.picker-form > .stock-picker { grid-column: auto; }
+.picker-fields { min-width: 0; display: grid; align-content: start; gap: 14px; }
+.picker-fields textarea { min-height: 88px; }
+@media (max-width: 960px) {
+  .management-form.picker-form { grid-template-columns: minmax(0, 1fr); }
+}

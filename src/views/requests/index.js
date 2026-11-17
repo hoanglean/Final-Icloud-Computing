@@ -19,17 +19,18 @@ function requestFormPage({ type, options, session, values = {}, error = '' }) {
   return `<main class="workspace">
     <div class="page-title"><div><h1>${title}</h1><p class="muted">${isReturn ? 'Chọn giao dịch bán và số lượng cần trả. Tồn kho chỉ thay đổi sau khi được duyệt.' : 'Ghi nhận sản phẩm hỏng hoặc hết hạn. Tồn kho chỉ giảm sau khi quản trị viên duyệt.'}</p></div><a class="text-link" href="/requests">Xem yêu cầu</a></div>
     ${error ? `<div class="alert error" role="alert">${escape(error)}</div>` : ''}
-    ${!options.length ? `<div class="alert error" role="status">${empty}</div>` : ''}
-    <form class="management-form card product-form" method="post" action="${action}">
+    ${!options.length ? `<section class="card"><p>${empty}</p>${isReturn ? '<a class="text-link" href="/sales/history">Xem lịch sử bán của tôi</a>' : ''}</section>` : `<form class="management-form card product-form picker-form" method="post" action="${action}">
       <input type="hidden" name="csrf" value="${escape(session.csrf)}">
       ${items.length ? stockPicker({ label: referenceLabel, name, selected: values[name], items,
         placeholder: isReturn ? 'Nhập tên sản phẩm hoặc mã giao dịch' : undefined }) : ''}
+      <div class="picker-fields">
       ${!isReturn ? `<div><label for="request-condition">Tình trạng hàng</label><select id="request-condition" name="condition"><option value="DAMAGED">Hàng hỏng</option><option value="EXPIRED"${values.condition === 'EXPIRED' ? ' selected' : ''}>Hàng hết hạn</option></select></div>` : ''}
       <div><label for="request-quantity">Số lượng</label><input id="request-quantity" name="quantity" type="number" min="1" max="2147483647" step="1" value="${escape(values.quantity || '')}" required inputmode="numeric"></div>
       <div class="form-wide"><label for="request-reason">Lý do</label><textarea class="stock-note" id="request-reason" name="reason" maxlength="1000" required>${escape(values.reason || '')}</textarea></div>
       <p class="small form-wide">Gửi yêu cầu không làm thay đổi tồn kho hoặc giá bán.</p>
       <div class="form-wide"><button class="button" type="submit"${options.length ? '' : ' disabled'}>Gửi yêu cầu</button></div>
-    </form>
+      </div>
+    </form>`}
   </main>`;
 }
 
