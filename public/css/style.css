@@ -735,3 +735,34 @@ a.history-page-link:hover { background: var(--color-accent-soft); }
 @media (max-width: 960px) {
   .management-form.picker-form { grid-template-columns: minmax(0, 1fr); }
 }
+
+/* Shared workspace controls and data surfaces */
+.signed-in .app-header { border-bottom-color: #e6eeea; }
+.signed-in .app-content > .workspace:not(.overview-workspace) > .page-title { margin-bottom: 18px; }
+.signed-in .records-table thead th { background: #f0f6f2; color: #3d594b; }
+.signed-in .records-table tbody > tr > * { border-bottom-color: #e8efeb; }
+.signed-in .records-table tbody > tr:last-child > * { border-bottom: 0; }
+.signed-in .records-table .num { font-variant-numeric: tabular-nums; }
+.signed-in .records-table .num:where(th, td) { text-align: end; }
+
+.signed-in .picker-form { gap: clamp(16px, 2.3vw, 30px); }
+.picker-form .picker-fields { align-content: start; }
+.picker-form .picker-fields input[type="number"] { width: min(100%, 10rem); }
+.picker-form .stock-picker-list { border-color: #e3ece6; }
+.picker-form .stock-picker-row:hover { background: #f5faf7; }
+.picker-form .stock-picker-row:has(input:checked) {
+  background: var(--color-accent-soft);
+  box-shadow: inset 3px 0 var(--color-accent);
+}
+.picker-form .stock-picker-name { font-weight: 650; }
+.picker-form .stock-picker-row > span:last-child { font-variant-numeric: tabular-nums; }
+
+.signed-in .button-outline { border-color: #ccdfd3; }
+.signed-in .button-outline:hover { background: var(--color-accent-soft); text-decoration: none; }
+.header-account nav a:hover, .nav-button:hover,
+.product-actions .text-link:hover, .product-actions .category-text-button:hover,
+.row-action:hover, .staff-request:hover h3, .signed-in .text-link:hover {
+  text-decoration: none;
+  background-color: var(--color-accent-soft);
+  border-radius: var(--radius-control);
+}
