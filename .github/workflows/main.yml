@@ -1,4 +1,4 @@
-name: Kiem thu Kho Viet
+name: Kiểm thử tự động V-Inventory
 
 on:
   push:
