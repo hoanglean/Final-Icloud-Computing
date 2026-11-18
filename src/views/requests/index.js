@@ -24,6 +24,7 @@ function requestFormPage({ type, options, session, values = {}, error = '' }) {
       ${items.length ? stockPicker({ label: referenceLabel, name, selected: values[name], items,
         placeholder: isReturn ? 'Nhập tên sản phẩm hoặc mã giao dịch' : undefined }) : ''}
       <div class="picker-fields">
+        <h2>Chi tiết yêu cầu</h2>
       ${!isReturn ? `<div><label for="request-condition">Tình trạng hàng</label><select id="request-condition" name="condition"><option value="DAMAGED">Hàng hỏng</option><option value="EXPIRED"${values.condition === 'EXPIRED' ? ' selected' : ''}>Hàng hết hạn</option></select></div>` : ''}
       <div><label for="request-quantity">Số lượng</label><input id="request-quantity" name="quantity" type="number" min="1" max="2147483647" step="1" value="${escape(values.quantity || '')}" required inputmode="numeric"></div>
       <div class="form-wide"><label for="request-reason">Lý do</label><textarea class="stock-note" id="request-reason" name="reason" maxlength="1000" required>${escape(values.reason || '')}</textarea></div>

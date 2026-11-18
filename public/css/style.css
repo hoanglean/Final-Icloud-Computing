@@ -777,3 +777,9 @@ a.history-page-link:hover { background: var(--color-accent-soft); }
 .picker-form .picker-fields { gap: 14px; }
 .low-stock-image { flex: none; border-radius: var(--radius-control); }
 .low-stock-image .product-thumbnail { width: 44px; height: 44px; }
+
+.picker-form { --picker-field-gap: 14px; }
+.picker-form .stock-picker legend { margin-bottom: var(--picker-field-gap); }
+.picker-form .picker-fields { gap: var(--picker-field-gap); }
+.picker-form #stock-picker-search > label,
+.picker-form .picker-fields > div > label { line-height: 22px; }
